@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#2e7d4f">
+  <title>דִּינוֹ-מוּטַנְט</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&family=Varela+Round&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-ico">🧬</span>
+      <span class="brand-text">דִּינוֹ-מוּטַנְט<small>מַעְבָּדַת הַדנ״א וְסִפְרֵי הַקְּרִיאָה</small></span>
+    </div>
+    <div class="hud">
+      <div class="dna-chip" title="נְקֻדּוֹת דנ״א">🧬 <b id="dna-count">0</b></div>
+      <button class="icon-btn" id="btn-parent" aria-label="מַצַּב הוֹרִים">🔒</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Lab: puzzle gates -->
+    <section class="screen" id="screen-lab">
+      <div class="lab-stage">
+        <div class="dino-box" id="lab-dino"></div>
+        <div class="dino-label"><b id="lab-name"></b>
+          <button class="btn small" id="btn-mutate"></button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>🧪 שַׁעַר הַדנ״א</h2>
+        <div class="chips" id="kind-chips"></div>
+        <div id="lab-puzzle"></div>
+        <button class="btn big" id="btn-next-puzzle" hidden>הַחִידָה הַבָּאָה ➔</button>
+      </div>
+    </section>
+
+    <!-- Reading -->
+    <section class="screen" id="screen-read" hidden>
+      <div id="read-library">
+        <div class="card">
+          <h2>📚 סִפְרִיַּת הַקְּרִיאָה</h2>
+          <p class="muted">בַּחֲרִי סִפּוּר. קוֹרְאִים מִלָּה אַחַר מִלָּה, וְכָל פִּסְקָה מַקְנָה דנ״א וְשִׁדְרוּג לַדִּינוֹ. סִפּוּר שָׁלֵם פּוֹתֵחַ דִּינוֹזָאוּר אַגָּדִי! 🌟</p>
+          <div id="story-list" class="story-list"></div>
+        </div>
+      </div>
+      <div id="read-reader" hidden>
+        <div class="card reader">
+          <div class="reader-head">
+            <button class="icon-btn" id="btn-reader-back" aria-label="חֲזָרָה">➜</button>
+            <h2 id="reader-title"></h2>
+            <span id="reader-count" class="muted"></span>
+          </div>
+          <div class="progress"><div id="reader-bar"></div></div>
+          <div class="reading-card" id="reader-text" aria-live="polite"></div>
+          <div class="reader-actions">
+            <button class="btn alt" id="btn-speak-word">🔊 הַקְרֵא לִי אֶת הַמִּלָּה</button>
+            <button class="btn ghost" id="btn-speak-par">🔊 כׇּל הַפִּסְקָה</button>
+          </div>
+          <button class="btn mic" id="btn-mic"></button>
+          <div class="heard" id="reader-heard" hidden></div>
+          <button class="btn big" id="btn-advance"></button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Expedition -->
+    <section class="screen" id="screen-trail" hidden>
+      <div class="card" id="trail-intro">
+        <h2>🏞️ מַסָּע הַהַרְפַּתְקָאוֹת</h2>
+        <p class="muted">שְׁלוֹשָׁה מִכְשׁוֹלִים בַּדֶּרֶךְ. אֶפְשָׁר לְהִשְׁתַּמֵּשׁ בַּיְּכֹלֶת שֶׁל הַדִּינוֹ, אוֹ לִפְתֹּר חִידָה וְלִבְנוֹת דֶּרֶךְ.</p>
+        <div class="pick-row" id="trail-pick"></div>
+        <p id="trail-traits" class="traits"></p>
+        <button class="btn big" id="btn-trail-start">🚀 יוֹצְאִים לַדֶּרֶךְ!</button>
+      </div>
+      <div id="trail-run" hidden>
+        <div class="flags" id="trail-flags" dir="ltr"><span class="flag">1</span><span class="flag">2</span><span class="flag">3</span><span class="flag end">🏁</span></div>
+        <div class="stage" id="stage" dir="ltr">
+          <div class="layer sky"></div>
+          <div class="layer hills"></div>
+          <div class="layer ground"></div>
+          <div class="stage-dino" id="stage-dino"></div>
+          <div class="stage-obstacle" id="stage-obs"></div>
+        </div>
+        <div class="card" id="trail-panel"></div>
+        <button class="btn small ghost" id="btn-trail-quit">⬅ חֲזָרָה</button>
+      </div>
+    </section>
+
+    <!-- Sanctuary -->
+    <section class="screen" id="screen-zoo" hidden>
+      <div class="card">
+        <h2>🦖 גַּן הַדִּינוֹזָאוּרִים</h2>
+        <div class="zoo-grid" id="zoo-grid"></div>
+      </div>
+      <div class="card">
+        <h2>🌟 אוֹסֶף הָאַגָּדִיִּים</h2>
+        <div class="legend-row" id="zoo-legends"></div>
+      </div>
+      <div class="card">
+        <h2>🥚 דִּינוֹזָאוּרִים חֲדָשִׁים</h2>
+        <div class="shop-row" id="zoo-shop"></div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabbar">
+    <button data-tab="lab" class="on"><span>🧪</span>מַעְבָּדָה</button>
+    <button data-tab="read"><span>📖</span>קְרִיאָה</button>
+    <button data-tab="trail"><span>🏞️</span>מַסָּע</button>
+    <button data-tab="zoo"><span>🦖</span>הַגַּן שֶׁלִּי</button>
+  </nav>
+
+  <div class="modal" id="modal" hidden><div class="modal-card" id="modal-card"></div></div>
+  <div class="toast" id="toast" hidden></div>
+
+  <script src="js/renderer.js"></script>
+  <script src="js/manipulatives.js"></script>
+  <script src="js/puzzles.js"></script>
+  <script src="js/reading.js"></script>
+  <script src="js/expedition.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

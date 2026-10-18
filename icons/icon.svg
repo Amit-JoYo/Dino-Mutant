@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#2e7d4f"/>
+  <g transform="translate(76,120) scale(1.2)">
+    <path d="M96 108 Q46 112 6 160 Q52 150 102 142 Z" fill="#5cc46a"/>
+    <ellipse cx="150" cy="122" rx="64" ry="44" fill="#5cc46a"/>
+    <ellipse cx="160" cy="140" rx="44" ry="26" fill="#e4f8c6"/>
+    <path d="M112 138 Q100 176 112 196 L148 200 Q150 190 134 186 Q138 164 146 138 Z" fill="#3a9a4a"/>
+    <path d="M186 112 Q202 82 226 72 L230 108 Z" fill="#5cc46a"/>
+    <path d="M204 60 Q250 48 290 70 Q296 88 284 96 L214 100 Q194 84 204 60 Z" fill="#5cc46a"/>
+    <path d="M214 98 L282 96 Q284 112 268 114 L220 112 Z" fill="#3a9a4a"/>
+    <circle cx="250" cy="70" r="7" fill="#fff"/><circle cx="251.5" cy="70" r="3.5" fill="#222"/>
+    <path d="M236 52 L242 34 L248 52 Z" fill="#ffe066"/>
+  </g>
+  <text x="256" y="104" font-family="Arial" font-size="64" font-weight="700" fill="#ffe066" text-anchor="middle">DNA</text>
+</svg>
