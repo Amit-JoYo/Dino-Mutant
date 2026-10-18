@@ -200,6 +200,7 @@ main { max-width: 720px; margin: 0 auto; padding: 12px; }
 .modal-card .row { display: flex; gap: 8px; justify-content: center; margin-top: 12px; }
 .modal-card h3 { text-align: right; }
 .modal-card p { text-align: right; }
+.p-btns { display: flex; gap: 6px; }
 .p-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #e5eee8; }
 .celebrate-dino { width: min(70vw, 260px); margin: 0 auto; }
 .modal-card .reward-line { text-align: center; font-size: 1.15rem; font-weight: 700; margin: 6px 0; }

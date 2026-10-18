@@ -339,15 +339,17 @@
 
     renderParent() {
       const st = App.state;
+      const editing = App._editId ? st.stories.find((s) => s.id === App._editId) : null;
+      if (!editing) App._editId = null;
       App.openModal(`
         <h2>⚙️ מַצַּב הוֹרִים</h2>
-        <h3>➕ טֶקְסְט חָדָשׁ מֵהַכִּתָּה</h3>
+        <h3>${editing ? '✏️ עֲרִיכַת סִפּוּר' : '➕ טֶקְסְט חָדָשׁ מֵהַכִּתָּה'}</h3>
         <p class="muted">הַדְבִּיקוּ טֶקְסְט עִם נִקּוּד. כָּל שׁוּרָה הִיא פִּסְקָה.</p>
         <input id="p-title" class="input" placeholder="כּוֹתֶרֶת הַסִּפּוּר" maxlength="60">
         <textarea id="p-text" class="input" rows="6" placeholder="הַדְבִּיקוּ כָּאן אֶת הַטֶּקְסְט..."></textarea>
-        <button class="btn" id="p-add">שְׁמִירַת הַסִּפּוּר</button>
+        <div class="row"><button class="btn" id="p-add">${editing ? 'שְׁמִירַת שִׁנּוּיִים' : 'שְׁמִירַת הַסִּפּוּר'}</button>${editing ? '<button class="btn ghost" id="p-cancel">בִּטּוּל</button>' : ''}</div>
         <h3>📚 הַסִּפּוּרִים</h3>
-        <div id="p-stories">${App.shared.map((s) => `<div class="p-row"><span>📌 ${esc(s.title)}</span><small class="muted">מִן הַמַּאְגָּר</small></div>`).join('')}${st.stories.filter((s) => !App.shared.some((x) => x.id === s.id)).map((s) => `<div class="p-row"><span>${esc(s.title)}</span><button class="btn small danger" data-del="${esc(s.id)}">מְחִיקָה</button></div>`).join('') || (App.shared.length ? '' : '<p class="muted">אֵין סִפּוּרִים</p>')}</div>
+        <div id="p-stories">${App.shared.map((s) => `<div class="p-row"><span>📌 ${esc(s.title)}</span><small class="muted">מִן הַמַּאְגָּר</small></div>`).join('')}${st.stories.filter((s) => !App.shared.some((x) => x.id === s.id)).map((s) => `<div class="p-row"><span>${esc(s.title)}</span><span class="p-btns"><button class="btn small alt" data-edit="${esc(s.id)}">עֲרִיכָה</button><button class="btn small danger" data-del="${esc(s.id)}">מְחִיקָה</button></span></div>`).join('') || (App.shared.length ? '' : '<p class="muted">אֵין סִפּוּרִים</p>')}</div>
         <h3>🔤 מִילִּים לְתִרְגּוּל</h3>
         <p class="muted">מִלָּה אַחַת בְּכָל שׁוּרָה, אוֹ מוּפְרָדוֹת בְּפְסִיקִים (לְפָחוֹת 3).</p>
         <textarea id="p-words" class="input" rows="3">${esc(st.words.join('\n'))}</textarea>
@@ -356,18 +358,50 @@
         <button class="btn small danger" id="p-reset">מְחִיקַת כׇּל הַהִתְקַדְּמוּת</button>
         <div class="row"><button class="btn ghost" data-close>סְגִירָה</button></div>`);
 
+      if (editing) {
+        $('p-title').value = editing.title;
+        $('p-text').value = editing.text;
+      }
       $('p-add').onclick = () => {
         const title = $('p-title').value.trim() || 'סִפּוּר חָדָשׁ';
         const text = $('p-text').value.trim();
-        if (!global.Reading.parse(text).length) return App.toast('הַטֶּקְסְט רֵיק');
-        st.stories.push({ id: 'u' + Date.now(), title, text });
+        const count = global.Reading.parse(text).length;
+        if (!count) return App.toast('הַטֶּקְסְט רֵיק');
+        if (editing) {
+          editing.title = title;
+          editing.text = text;
+          // keep progress, but never beyond the new length
+          const pr = st.progress[editing.id];
+          if (pr) {
+            pr.rewarded = Math.min(pr.rewarded, count);
+            if (pr.par >= count) pr.par = 0;
+          }
+          App._editId = null;
+        } else {
+          st.stories.push({ id: 'u' + Date.now(), title, text });
+        }
         App.save();
         App.toast('נִשְׁמַר! ✔');
         App.renderParent();
       };
+      if ($('p-cancel')) {
+        $('p-cancel').onclick = () => {
+          App._editId = null;
+          App.renderParent();
+        };
+      }
       $('p-stories').onclick = (e) => {
+        const ed = e.target.closest('[data-edit]');
+        if (ed) {
+          App._editId = ed.dataset.edit;
+          App.renderParent();
+          const m = $('modal-card');
+          if (m) m.scrollTop = 0;
+          return;
+        }
         const b = e.target.closest('[data-del]');
         if (!b || !global.confirm('לִמְחֹק אֶת הַסִּפּוּר?')) return;
+        if (App._editId === b.dataset.del) App._editId = null;
         st.stories = st.stories.filter((s) => s.id !== b.dataset.del);
         delete st.progress[b.dataset.del];
         App.save();
