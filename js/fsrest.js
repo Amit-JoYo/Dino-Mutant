@@ -124,7 +124,7 @@
           if (status === 404) throw err('not-found', 'document does not exist');
         },
         async delete() {
-          await call('DELETE', `${host}/${root}/${path}`);
+          await call('POST', `${host}/${root}:commit`, { writes: [{ delete: `${root}/${path}` }] });
         },
       };
     }

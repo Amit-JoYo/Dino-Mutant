@@ -45,6 +45,17 @@
     ]).finally(() => clearTimeout(timer));
   };
 
+  // Every button action goes through here so a failure is shown instead of silently doing nothing.
+  const guard = (fn) => async (...args) => {
+    const box = $('err');
+    try {
+      await fn(...args);
+      box.textContent = '';
+    } catch (e) {
+      box.textContent = `הפעולה נכשלה: ${e.code || ''} ${e.message || e}`;
+    }
+  };
+
   async function loadClasses() {
     const box = $('classes');
     box.replaceChildren(h('p', { class: 'muted' }, 'טוען…'));
@@ -67,10 +78,10 @@
         h('b', {}, data.name || '(ללא שם)'), ' ',
         h('span', { class: 'code' }, code), ' ',
         h('button', { class: 'ghost', onclick: () => navigator.clipboard && navigator.clipboard.writeText(code) }, 'העתקה'),
-        h('button', { class: 'ghost', onclick: async () => {
+        h('button', { class: 'ghost', onclick: guard(async () => {
           await db.doc(`classes/${code}`).update({ active: !data.active });
           loadClasses();
-        } }, data.active ? 'כיבוי הכיתה' : 'הפעלת הכיתה'),
+        }) }, data.active ? 'כיבוי הכיתה' : 'הפעלת הכיתה'),
         h('button', { class: 'ghost', onclick: () => showMembers(code, members) }, 'חברים')
       ),
       members
@@ -99,21 +110,21 @@
         h('td', {}, m.name, m.locked ? ' 🔒' : ''),
         h('td', { class: 'muted' }, dinos),
         h('td', {},
-          h('button', { onclick: async () => {
+          h('button', { onclick: guard(async () => {
             const name = cleanName(prompt('שם חדש (יינעל):', m.name));
             if (name.length < 2) return;
             await ref.update({ name, locked: true });
             showMembers(code, box);
-          } }, 'שינוי שם'),
-          m.locked ? h('button', { class: 'ghost', onclick: async () => {
+          }) }, 'שינוי שם'),
+          m.locked ? h('button', { class: 'ghost', onclick: guard(async () => {
             await ref.update({ locked: false });
             showMembers(code, box);
-          } }, 'שחרור') : '',
-          h('button', { class: 'danger', onclick: async () => {
+          }) }, 'שחרור') : '',
+          h('button', { class: 'danger', onclick: guard(async () => {
             if (!confirm(`להסיר את ${m.name}?`)) return;
             await ref.delete();
             showMembers(code, box);
-          } }, 'הסרה')
+          }) }, 'הסרה')
         )
       );
     });
@@ -189,13 +200,13 @@
       }
     };
     $('btn-out').onclick = () => auth.signOut();
-    $('btn-create').onclick = async () => {
+    $('btn-create').onclick = guard(async () => {
       const name = $('new-name').value.trim().slice(0, 40);
       if (!name) return;
       await db.doc(`classes/${makeCode()}`).set({ name, active: true, createdAt: FsRest.serverTime });
       $('new-name').value = '';
       loadClasses();
-    };
+    });
   }
 
   start().catch((e) => { $('status').textContent = 'שגיאה: ' + e.message; });
