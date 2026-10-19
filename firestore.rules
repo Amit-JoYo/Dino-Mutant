@@ -1,0 +1,63 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // Admin accounts are added by hand in the Firebase console: admins/{uid}.
+    function isAdmin() {
+      return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function classIsActive(code) {
+      return get(/databases/$(database)/documents/classes/$(code)).data.active == true;
+    }
+
+    function isMember(code) {
+      return signedIn() && exists(/databases/$(database)/documents/classes/$(code)/members/$(request.auth.uid));
+    }
+
+    function validMember() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['name', 'locked', 'dinos', 'updatedAt'])
+        && d.name is string && d.name.size() >= 2 && d.name.size() <= 12
+        && d.locked is bool
+        && d.dinos is list && d.dinos.size() <= 3;
+    }
+
+    match /admins/{id} {
+      allow read: if signedIn() && request.auth.uid == id;
+      allow write: if false;
+    }
+
+    match /classes/{code} {
+      // Reading one class needs its code; classes cannot be listed except by admins.
+      allow get: if signedIn();
+      allow list: if isAdmin();
+      allow write: if isAdmin();
+
+      match /members/{uid} {
+        allow read: if (signedIn() && request.auth.uid == uid)
+          || (isMember(code) && classIsActive(code))
+          || isAdmin();
+
+        allow create: if signedIn() && request.auth.uid == uid
+          && validMember()
+          && request.resource.data.locked == false
+          && classIsActive(code);
+
+        // Members cannot change the lock, and cannot rename themselves while locked.
+        allow update: if (signedIn() && request.auth.uid == uid
+            && validMember()
+            && request.resource.data.locked == resource.data.locked
+            && (!resource.data.locked || request.resource.data.name == resource.data.name))
+          || isAdmin();
+
+        allow delete: if (signedIn() && request.auth.uid == uid) || isAdmin();
+      }
+    }
+  }
+}

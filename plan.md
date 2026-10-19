@@ -76,3 +76,45 @@ A "העולם" tab shows the whole herd living in one scene (wandering, eating, 
 7. Parent Menu (מצב הורים)
 
 Local settings modal where parents can paste weekly school reading texts and custom Hebrew words, saving them directly to localStorage.
+
+8. Class Sharing (online, optional) - PLANNED
+
+Goal: kids in a class can see each other's dinos in a shared "class world" and later gift dinos. Friendly and cooperative only: no rankings, no chat.
+
+Principles
+- No personal data beyond a child's first name: no email, phone, surname, picture, ID or number.
+- No free-text chat. Interaction is limited to preset emoji and reactions.
+- A parent turns the feature on in parent mode (consent switch, with a notice). It is off by default.
+- Offline first: if the server is unreachable the game works exactly as it does today.
+- The static site stays on GitHub Pages. Only shared data lives on Firebase (free Spark plan): anonymous auth + Firestore.
+
+Identity and classes
+- Silent anonymous account on first use; the child never logs in.
+- Only the owner creates classes, from admin.html (Google sign-in; admin accounts are listed in the admins collection by hand in the Firebase console). A class has a random join code posted in the parents' group, and can be switched off.
+- A child joins with the class code and types a first name (max 12 characters, basic filter).
+- A parent can edit the name, leave the class, or delete all online data from parent mode.
+- Known limitation: an anonymous account cannot move to a new device. Clearing browser data means rejoining; the owner can remove the stale member.
+
+Moderation (admin.html)
+- Create/disable classes, see members, rename or remove any member.
+- A rename can lock the name so it cannot be retyped by the child or parent app.
+- Delete a member's data entirely.
+
+Data model
+- classes/{code}: { name, active, createdAt }
+- classes/{code}/members/{uid}: { name, locked, dinos (up to 3 showcased: species, tint, legendary, outfit, name), updatedAt }
+- admins/{uid}: marker documents, writable only from the console.
+
+Security rules (firestore.rules)
+- A class can be read by its code (get) but never listed. Only members read their class's members. Members write only their own record, cannot change a locked name, and cannot unlock themselves. Only admins create classes or override names.
+
+Phases
+1. Cloud identity, parent consent switch, firebase config. [client scaffolding built]
+2. Classes, join code, first name, showcase, admin page, rules. [built; needs a Firebase project to run]
+3. Class world tab: classmates' showcased dinos visit read-only; they can be fed/played with and given emoji. Refresh every 30-60 seconds.
+4. Gifting: a duplicate of a regular dino (not legendary, not the starter) sent to a classmate, accepted by the receiver, atomic on the server, with a daily limit.
+5. WhatsApp picture cards (works without the server; can ship independently).
+
+Setup the owner must do: create the Firebase project (Spark plan), enable Anonymous and Google sign-in, create Firestore, add `amit-joyo.github.io` under Authentication > Settings > Authorized domains (needed for the admin Google popup), paste the web app config into js/firebase-config.js (and bump `CACHE` in sw.js so installed copies pick it up), publish firestore.rules, then open admin.html, sign in once and create the document admins/{uid} (the page prints the uid) in the console.
+
+Status: phases 1 and 2 are built (js/cloud.js, js/firebase-config.js, firestore.rules, admin.html, js/admin.js, parent-menu section "שיתוף בכיתה"). Not yet verified against a real Firebase project, and firestore.rules has not been run in the emulator.

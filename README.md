@@ -1,0 +1,52 @@
+# דִּינוֹ-מוּטַנְט (Dino Mutant)
+
+A free, offline-first Hebrew learning game for early 2nd graders. Instead of timers and grinding, dinosaurs are earned by solving math puzzles and reading school stories aloud, word by word.
+
+**Play:** https://amit-joyo.github.io/Dino-Mutant/
+
+No ads, no purchases, no accounts. All progress stays on the device (`localStorage`).
+
+## Features
+
+- **Lab (מַעְבָּדָה):** procedural 2nd-grade math puzzles with full nikud: bridging 10, tens and units, missing addend, word problems, and word practice. Includes a drag-and-drop egg counting board and text-to-speech (he-IL).
+- **Reading (קְרִיאָה):** karaoke-style reading, word by word, with a highlighted active word, per-word and per-paragraph read-aloud, and an optional microphone check. Each paragraph earns DNA and a small dino upgrade; finishing a story unlocks a legendary dino.
+- **Trail (מַסָּע):** a side-scrolling expedition with 3 obstacles per trip. Clear each with the dino's special ability or by solving a puzzle.
+- **World (הָעוֹלָם):** the whole herd lives on one screen: wandering, eating, playing, sleeping, splashing and visiting each other, with day and night following the device clock. Tap a dino to feed, play, put to sleep, wash, hug, rename, or dress it. Needs decay slowly but never drop below a floor, so dinos get sad but never die.
+- **Dress-up:** 63 items in 6 slots (hats, clothes, glasses, neck, back, tail), bought with DNA.
+- **My Park (הַגַּן שֶׁלִּי):** 10 dino species, each with a legendary version, plus a shop for new ones.
+- **Parent mode (מַצַּב הוֹרִים):** behind a small multiplication gate. Paste, edit and delete stories from school, set custom practice words, or reset progress.
+- **Class sharing (optional, off by default):** with Firebase configured, a parent can enable it, join a class by code with the child's first name, choose up to 3 dinos to show, and delete all online data at any time. Only a first name and the chosen dinos are shared: no chat, pictures or personal details. The owner manages classes and names from `admin.html`. See `plan.md` section 8 for setup.
+
+## Run locally
+
+It is plain HTML, CSS and JavaScript with no build step. Serve the folder with any static server:
+
+```
+npx http-server -p 8080
+```
+
+Then open http://localhost:8080. The service worker only registers over http(s), not `file://`.
+
+## Adding stories
+
+Add entries to `stories.json`. Each needs an `id`, a `title`, and either `text` (one paragraph per line) or a `paragraphs` array. Use full nikud. Stories are fetched network-first, so new ones appear without an app update.
+
+## Project layout
+
+| File | Purpose |
+|---|---|
+| `index.html`, `css/style.css` | UI, RTL layout, animations |
+| `js/app.js` | State, tabs, lab, park, parent menu |
+| `js/renderer.js` | SVG dino rigs (10 species) and animations |
+| `js/wardrobe.js` | Dress-up items and where they attach to each species |
+| `js/world.js` | The world scene and pet care |
+| `js/puzzles.js`, `js/manipulatives.js` | Math and word puzzles, egg counting board |
+| `js/reading.js` | Karaoke reader and rewards |
+| `js/expedition.js` | Trail mode |
+| `sw.js`, `manifest.json` | Offline cache and install-to-home-screen |
+
+When changing cached files, bump `CACHE` in `sw.js` so installed copies update.
+
+## Install on a phone
+
+Open the link in Chrome on Android, then menu → **Add to Home screen**. After the first load it works offline.

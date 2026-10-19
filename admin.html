@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Dino Mutant – ניהול</title>
+  <style>
+    body { font-family: Rubik, Arial, sans-serif; background: #eaf7ee; color: #23323a; margin: 0; padding: 16px; }
+    main { max-width: 760px; margin: 0 auto; }
+    h1 { margin: 0 0 8px; }
+    .card { background: #fff; border-radius: 14px; padding: 14px; margin: 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+    button { font: inherit; cursor: pointer; border: 0; border-radius: 10px; padding: 8px 14px; background: #2e7d4f; color: #fff; margin: 2px; }
+    button.ghost { background: #e6efe9; color: #1f5c38; }
+    button.danger { background: #e5484d; }
+    input { font: inherit; padding: 8px; border: 2px solid #cfe3d6; border-radius: 10px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    td, th { text-align: right; padding: 6px 4px; border-bottom: 1px solid #e5eee8; vertical-align: middle; }
+    .code { font-family: monospace; font-size: 1.3rem; letter-spacing: 2px; direction: ltr; display: inline-block; }
+    .muted { color: #6b7c85; }
+    #status { white-space: pre-wrap; word-break: break-all; }
+    .off { opacity: .55; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>🛠️ ניהול כיתות</h1>
+  <div class="card" id="auth-box">
+    <div id="status" class="muted">טוען…</div>
+    <button id="btn-in" hidden>התחברות עם Google</button>
+    <button id="btn-out" class="ghost" hidden>התנתקות</button>
+  </div>
+
+  <div id="panel" hidden>
+    <div class="card">
+      <b>כיתה חדשה</b><br>
+      <input id="new-name" placeholder="שם הכיתה" maxlength="40">
+      <button id="btn-create">יצירה</button>
+      <p class="muted">הקוד נוצר אוטומטית. את הקוד מפרסמים בקבוצת ההורים.</p>
+    </div>
+    <div id="classes"></div>
+  </div>
+</main>
+
+<script src="js/firebase-config.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>

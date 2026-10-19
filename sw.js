@@ -1,4 +1,4 @@
-const CACHE = 'dino-mutant-v7';
+const CACHE = 'dino-mutant-v10';
 const ASSETS = [
   './',
   './index.html',
@@ -9,6 +9,8 @@ const ASSETS = [
   './js/renderer.js',
   './js/wardrobe.js',
   './js/world.js',
+  './js/firebase-config.js',
+  './js/cloud.js',
   './js/manipulatives.js',
   './js/puzzles.js',
   './js/reading.js',
@@ -47,7 +49,9 @@ function networkFirst(request) {
 // Everything else: cache first; anything fetched successfully later (e.g. Google Fonts) is cached for offline use.
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
-  if (new URL(e.request.url).pathname.endsWith('/stories.json')) {
+  const path = new URL(e.request.url).pathname;
+  if (path.endsWith('/admin.html') || path.endsWith('/admin.js')) return;
+  if (path.endsWith('/stories.json')) {
     e.respondWith(networkFirst(e.request));
     return;
   }

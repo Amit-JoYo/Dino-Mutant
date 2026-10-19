@@ -25,6 +25,7 @@
       solved: 0,
       trips: 0,
       wardrobe: [],
+      cloud: { on: false, code: '', className: '', name: '', locked: false, showcase: [] },
     };
   }
 
@@ -40,6 +41,8 @@
     if (!s.dinos.some((d) => d.uid === s.active)) s.active = s.dinos[0].uid;
     s.dinos = s.dinos.filter((d) => global.Renderer.SPECIES[d.species]);
     s.wardrobe = Array.from(new Set((Array.isArray(s.wardrobe) ? s.wardrobe : []).concat(global.Wardrobe.STARTERS)));
+    s.cloud = Object.assign(defaults().cloud, s.cloud || {});
+    if (!Array.isArray(s.cloud.showcase)) s.cloud.showcase = [];
     s.seeded = true; // sample stories now come from stories.json, not local storage
     return s;
   }
@@ -360,6 +363,8 @@
         <p class="muted">מִלָּה אַחַת בְּכָל שׁוּרָה, אוֹ מוּפְרָדוֹת בְּפְסִיקִים (לְפָחוֹת 3).</p>
         <textarea id="p-words" class="input" rows="3">${esc(st.words.join('\n'))}</textarea>
         <button class="btn" id="p-words-save">שְׁמִירַת מִלִּים</button>
+        <h3>🏫 שִׁתּוּף בַּכִּתָּה</h3>
+        <div id="p-cloud"></div>
         <h3>🧹 אִתְחוּל</h3>
         <button class="btn small danger" id="p-reset">מְחִיקַת כׇּל הַהִתְקַדְּמוּת</button>
         <div class="row"><button class="btn ghost" data-close>סְגִירָה</button></div>`);
@@ -368,6 +373,7 @@
         $('p-title').value = editing.title;
         $('p-text').value = editing.text;
       }
+      global.Cloud.mountParent($('p-cloud'));
       $('p-add').onclick = () => {
         const title = $('p-title').value.trim() || 'סִפּוּר חָדָשׁ';
         const text = $('p-text').value.trim();
@@ -418,8 +424,11 @@
         App.save();
         App.toast(st.words.length >= 3 ? 'הַמִּלִּים נִשְׁמְרוּ ✔' : 'נִשְׁמַר. צָרִיךְ לְפָחוֹת 3 מִלִּים כְּדֵי שֶׁיֻשְׁתַּמְּשׁוּ בָּהֶן');
       };
-      $('p-reset').onclick = () => {
+      $('p-reset').onclick = async () => {
         if (!global.confirm('לִמְחֹק אֶת כׇּל הַהִתְקַדְּמוּת וְהַדִּינוֹזָאוּרִים?')) return;
+        try {
+          await global.Cloud.deleteAll();
+        } catch (e) { /* offline: the owner can remove the stale member */ }
         localStorage.removeItem(KEY);
         global.location.reload();
       };
@@ -468,6 +477,7 @@
       global.Reading.init();
       global.Expedition.init();
       global.World.init();
+      global.Cloud.autoSync();
       App.refreshHud();
       App.mountLabPuzzle();
       App.showTab('lab');
