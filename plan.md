@@ -111,7 +111,7 @@ Security rules (firestore.rules)
 Phases
 1. Cloud identity, parent consent switch, firebase config. [client scaffolding built]
 2. Classes, join code, first name, showcase, admin page, rules. [built; needs a Firebase project to run]
-3. Class world tab: classmates' showcased dinos visit read-only; they can be fed/played with and given emoji. Refresh every 30-60 seconds.
+3. Class world tab: classmates' showcased dinos visit read-only; they can be fed/played with and given emoji. Refresh every 30-60 seconds. [built: a "הַכִּתָּה" toggle inside the World tab, refresh every 45s, guests react to feeding/playing/hugging but nothing is saved and no DNA is earned; emoji reactions to the server are not built]
 4. Gifting: a duplicate of a regular dino (not legendary, not the starter) sent to a classmate, accepted by the receiver, atomic on the server, with a daily limit.
 5. WhatsApp picture cards (works without the server; can ship independently).
 

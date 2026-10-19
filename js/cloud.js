@@ -165,6 +165,43 @@
     global.App.save();
   }
 
+  /* Classmates' showcased dinos. Everything from the server is treated as untrusted and re-validated. */
+  async function classmates() {
+    const c = cfg();
+    if (!c.on || !c.code || !configured()) return [];
+    await boot();
+    const snap = await db.collection(`classes/${c.code}/members`).get();
+    const species = global.Renderer.SPECIES;
+    const out = [];
+    snap.docs.forEach((doc) => {
+      if (doc.id === auth.currentUser.uid) return;
+      const m = doc.data();
+      const name = cleanName(m.name);
+      if (!name) return;
+      const dinos = (Array.isArray(m.dinos) ? m.dinos : [])
+        .slice(0, MAX_SHOWCASE)
+        .filter((d) => d && species[d.species])
+        .map((d) => {
+          const outfit = {};
+          if (d.outfit && typeof d.outfit === 'object') {
+            Object.keys(d.outfit).forEach((k) => { if (typeof d.outfit[k] === 'string') outfit[k] = d.outfit[k]; });
+          }
+          return {
+            species: d.species,
+            tint: Number.isFinite(d.tint) ? Math.abs(Math.floor(d.tint)) % 20 : 0,
+            legendary: d.legendary === true,
+            horns: Number.isFinite(d.horns) ? Math.min(3, Math.max(0, Math.floor(d.horns))) : 0,
+            outfit,
+            name: cleanName(d.name),
+          };
+        });
+      if (dinos.length) out.push({ id: doc.id, name, dinos });
+    });
+    return out;
+  }
+
+  const inClass = () => configured() && !!cfg().on && !!cfg().code;
+
   function autoSync() {
     const c = cfg();
     if (!c.on || !c.code) return;
@@ -277,5 +314,5 @@
     };
   }
 
-  global.Cloud = { configured, mountParent, autoSync, deleteAll, cleanName };
+  global.Cloud = { configured, inClass, classmates, mountParent, autoSync, deleteAll, cleanName };
 })(window);

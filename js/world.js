@@ -53,7 +53,8 @@
     { e: '🌼', x: 78, y: 92, k: 5 },
   ];
 
-  const state = { on: false, token: 0, sprites: new Map(), sel: null, interval: 0, lock: false, saveT: 0 };
+  const state = { on: false, token: 0, sprites: new Map(), sel: null, interval: 0, refreshT: 0, lock: false, saveT: 0, mode: 'mine' };
+  const MAX_VISITORS = 24;
 
   /* ------------------------------------------------------------------ pet stats */
   const Pets = {
@@ -202,7 +203,8 @@
     const el = document.createElement('div');
     el.className = 'w-dino';
     el.dataset.uid = d.uid;
-    el.innerHTML = `<div class="w-shadow"></div><div class="w-flip">${global.App.dinoHtml(d)}</div><div class="w-prop"></div><div class="w-bubble"></div><div class="w-badge"></div>`;
+    el.innerHTML = `<div class="w-shadow"></div><div class="w-flip">${global.App.dinoHtml(d)}</div><div class="w-prop"></div><div class="w-bubble"></div><div class="w-badge"></div><div class="w-name"></div>`;
+    if (d.visitor) el.querySelector('.w-name').textContent = d.owner;
     const s = { d, el, x: 0, y: 0, busy: false, actId: 0, state: '' };
     const p = isSwimmer(s) ? pondPoint() : landPoint();
     s.x = p.x;
@@ -231,6 +233,7 @@
   }
 
   function updateBadge(s) {
+    if (s.d.visitor) return;
     const low = Pets.lowest(s.d);
     const b = s.el.querySelector('.w-badge');
     b.textContent = Pets.ensure(s.d)[low.key] < 30 ? low.icon : '';
@@ -405,6 +408,32 @@
     }
     const d = s.d;
     const App = global.App;
+    if (d.visitor) {
+      panel.hidden = false;
+      panel.innerHTML = `
+        <div class="pet-head">
+          <div class="pet-stage" id="pet-stage">
+            <div class="pet-dino">${App.dinoHtml(d)}</div>
+            <div class="pet-prop" id="pet-prop"></div>
+          </div>
+          <div class="pet-info">
+            <div class="pet-name">🏫 <b id="pet-name"></b></div>
+            <div class="pet-sub" id="pet-sub"></div>
+            <p class="muted">הַדִּינוֹזָאוּר הוֹלֵךְ לְבַקֵּר. אֶפְשָׁר לְהַאֲכִיל וּלְשַׂחֵק, אֲבָל אִי אֶפְשָׁר לְשַׁנּוֹת אוֹתוֹ.</p>
+          </div>
+        </div>
+        <p class="pet-msg" id="pet-msg">👋</p>
+        <div class="pet-actions">
+          <button class="btn pa" data-pet="feed"><span>🍎</span>לְהַאֲכִיל</button>
+          <button class="btn pa alt" data-pet="play"><span>⚽</span>לְשַׂחֵק</button>
+          <button class="btn pa pink" data-pet="hug"><span>🤗</span>חִבּוּק</button>
+        </div>
+        <div class="food-row" id="food-row" hidden>${FOODS.map((f) => `<button class="food" data-food="${f.id}"><span>${f.e}</span><small>${f.name}</small></button>`).join('')}</div>
+        <button class="btn ghost small" data-pet="close">סְגִירָה ✖</button>`;
+      $('pet-name').textContent = d.owner;
+      $('pet-sub').textContent = App.dinoName(d);
+      return;
+    }
     Pets.decay(d);
     panel.hidden = false;
     panel.innerHTML = `
@@ -434,7 +463,7 @@
 
   function updatePanel() {
     const s = state.sel;
-    if (!s || $('pet-panel').hidden) return;
+    if (!s || $('pet-panel').hidden || s.d.visitor) return;
     $('pet-bars').innerHTML = bars(s.d);
     $('pet-mood').textContent = Pets.mood(s.d);
     $('pet-hearts').textContent = `❤️ ${Pets.hearts(s.d)}`;
@@ -477,11 +506,22 @@
     s.el.querySelector('.w-flip').innerHTML = global.App.dinoHtml(s.d);
   }
 
+  /* Guest dinos only react: nothing is saved and no DNA is earned. */
+  function visitorCare(s, kind, arg) {
+    if (kind === 'feed') {
+      const f = FOODS.find((x) => x.id === arg) || FOODS[0];
+      const fav = f.id === FAVORITE[s.d.species];
+      return { text: fav ? 'זֶה הָאֹכֶל הָאָהוּב עָלַי! 💖' : 'טָעִים! תּוֹדָה! 😋', anim: 'eating', prop: f.e, ms: 2800, dna: 0 };
+    }
+    if (kind === 'play') return { text: 'יָאהוּ! כֵּיף! ⚽', anim: 'playing', prop: '⚽', ms: 3200, dna: 0 };
+    return { text: 'חִבּוּק! כַּמָּה נָעִים 🤗', anim: 'hugging', prop: '❤️', ms: 2200, dna: 0 };
+  }
+
   async function doAction(kind, arg) {
     const s = state.sel;
     if (!s || state.lock) return;
     const App = global.App;
-    const res = Pets.care(s.d, kind, arg);
+    const res = s.d.visitor ? visitorCare(s, kind, arg) : Pets.care(s.d, kind, arg);
     panelSay(res.text);
     if (res.dna) {
       App.addDna(res.dna);
@@ -633,6 +673,64 @@
     saveSoon();
   }
 
+  function showTabs() {
+    const Cloud = global.Cloud;
+    const can = !!(Cloud && Cloud.inClass());
+    if (!can) state.mode = 'mine';
+    $('world-tabs').hidden = !can;
+    document.querySelectorAll('#world-tabs [data-wm]').forEach((b) => b.classList.toggle('on', b.dataset.wm === state.mode));
+  }
+
+  function signature(list) {
+    return JSON.stringify(list.map((m) => [m.id, m.name, m.dinos]));
+  }
+
+  // One dino per classmate first, then their second and third, so every friend is visible.
+  function visitorDinos(list) {
+    const out = [];
+    for (let round = 0; out.length < MAX_VISITORS && round < 3; round++) {
+      list.forEach((m) => {
+        if (out.length < MAX_VISITORS && m.dinos[round]) out.push(Object.assign({}, m.dinos[round], { owner: m.name, key: `${m.id}:${round}` }));
+      });
+    }
+    return out;
+  }
+
+  function mountVisitors(list, my) {
+    state.sprites.clear();
+    $('world-herd').innerHTML = '';
+    visitorDinos(list).forEach((v, i) => {
+      const d = Object.assign({ uid: i + 1, visitor: true }, v);
+      const s = makeSprite(d);
+      state.sprites.set(String(d.uid), s);
+      $('world-herd').appendChild(s.el);
+    });
+    $('world-count').textContent = list.length
+      ? `${list.length} חֲבֵרִים בַּכִּתָּה`
+      : 'עוֹד אַף אֶחָד מֵהַכִּתָּה לֹא כָּאן. 👋';
+    state.sprites.forEach((s) => life(s, my));
+  }
+
+  async function enterClass(my) {
+    const Cloud = global.Cloud;
+    $('world-count').textContent = 'טוֹעֲנִים אֶת הַכִּתָּה…';
+    let last = null;
+    const load = async (first) => {
+      try {
+        const list = await Cloud.classmates();
+        if (!alive(my) || state.mode !== 'class') return;
+        const sig = signature(list);
+        if (sig === last || (!first && state.sel)) return;
+        last = sig;
+        mountVisitors(list, my);
+      } catch (e) {
+        if (first && alive(my)) $('world-count').textContent = 'אֵין חִבּוּר. נַסּוּ שׁוּב בְּעוֹד רֶגַע';
+      }
+    };
+    await load(true);
+    if (alive(my)) state.refreshT = setInterval(() => load(false), 45000);
+  }
+
   function enter() {
     const App = global.App;
     leave();
@@ -641,24 +739,30 @@
     state.sprites.clear();
     $('world-herd').innerHTML = '';
     buildScene();
+    showTabs();
+    $('pet-panel').hidden = true;
+    state.sel = null;
+    state.interval = setInterval(periodic, 30000);
+    if (state.mode === 'class') {
+      enterClass(my);
+      return;
+    }
     App.state.dinos.forEach((d) => {
       Pets.decay(d);
       const s = makeSprite(d);
-      state.sprites.set(d.uid, s);
+      state.sprites.set(String(d.uid), s);
       $('world-herd').appendChild(s.el);
       updateBadge(s);
     });
     $('world-count').textContent = `${state.sprites.size} דִּינוֹזָאוּרִים בָּעוֹלָם`;
-    $('pet-panel').hidden = true;
-    state.sel = null;
     state.sprites.forEach((s) => life(s, my));
-    state.interval = setInterval(periodic, 30000);
   }
 
   function leave() {
     state.on = false;
     state.token++;
     clearInterval(state.interval);
+    clearInterval(state.refreshT);
     state.sel = null;
     state.lock = false;
     if ($('pet-panel')) $('pet-panel').hidden = true;
@@ -667,7 +771,13 @@
   function init() {
     $('world-herd').addEventListener('click', (e) => {
       const el = e.target.closest('.w-dino');
-      if (el) select(Number(el.dataset.uid));
+      if (el) select(el.dataset.uid);
+    });
+    $('world-tabs').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-wm]');
+      if (!b || b.dataset.wm === state.mode) return;
+      state.mode = b.dataset.wm;
+      enter();
     });
     $('pet-panel').addEventListener('click', onPanelClick);
     window.addEventListener('resize', layout);

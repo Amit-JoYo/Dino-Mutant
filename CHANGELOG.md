@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Added
+- **Class world:** once a child has joined a class, the World tab gets a "הַכִּתָּה" toggle showing classmates' showcased dinos (with their first names) wandering together. Visiting dinos can be fed, played with and hugged but never changed, and refresh every 45 seconds. Data from the server is re-validated before drawing.
 - **Class sharing groundwork (off until configured):** parent-mode consent switch, join a class by code with a first name, choose up to 3 dinos to show, rename, leave, and delete all online data. Backed by Firebase (anonymous auth + Firestore).
 - `admin.html` for the owner: create and switch off classes, rename, lock or remove members.
 - `firestore.rules` with per-class access, no listing of classes, and locked names.
