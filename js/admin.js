@@ -159,14 +159,13 @@
       $('status').textContent = 'js/firebase-config.js עדיין ריק';
       return;
     }
-    for (const n of ['app', 'auth', 'firestore']) {
+    for (const n of ['app', 'auth']) {
       await loadScript(`https://www.gstatic.com/firebasejs/${SDK_VERSION}/firebase-${n}-compat.js`);
     }
     const app = firebase.initializeApp(window.FIREBASE_CONFIG, 'admin');
     auth = app.auth();
-    db = app.firestore();
-    // Some networks and extensions break Firestore's default streaming connection; long polling still works.
-    db.settings({ experimentalForceLongPolling: true });
+    // Data goes over plain HTTPS (js/fsrest.js): the SDK's streaming connection hangs on some phones and networks.
+    db = FsRest.client(window.FIREBASE_CONFIG, (force) => auth.currentUser.getIdToken(!!force));
     let signingIn = false;
     $('btn-in').onclick = async () => {
       if (signingIn) return;
@@ -186,7 +185,7 @@
     $('btn-create').onclick = async () => {
       const name = $('new-name').value.trim().slice(0, 40);
       if (!name) return;
-      await db.doc(`classes/${makeCode()}`).set({ name, active: true, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+      await db.doc(`classes/${makeCode()}`).set({ name, active: true, createdAt: FsRest.serverTime });
       $('new-name').value = '';
       loadClasses();
     };

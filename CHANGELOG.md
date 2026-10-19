@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Fixed
+- Class sharing and the admin page no longer use the Firebase library's own database connection, which hangs on some phones and networks. Data now goes over plain HTTPS (`js/fsrest.js`); the library is used only for signing in. Connection problems now show a message naming the step that failed instead of waiting forever.
+- Added `diag.html`, a step-by-step connection test page for troubleshooting.
+
 ### Added
 - **Picture cards for WhatsApp:** share a dino card (care panel) or a progress card ("הַגַּן שֶׁלִּי") as an image, through the phone's share sheet or as a download. Works without any server.
 - **Emoji reactions:** send 👋 ❤️ 🎉 ⭐ to a classmate's visiting dino. The classmate sees who sent it above their dinos.

@@ -1,4 +1,4 @@
-/* Optional class sharing through Firebase (anonymous auth + Firestore). The SDK loads lazily, so the game works offline without it. */
+/* Optional class sharing through Firebase (anonymous auth + Firestore over HTTPS). Loads lazily, so the game works offline without it. */
 (function (global) {
   'use strict';
 
@@ -15,7 +15,7 @@
   const configured = () => !!global.FIREBASE_CONFIG;
   const cfg = () => global.App.state.cloud;
   const fail = (code) => Object.assign(new Error(code), { code });
-  const stamp = () => global.firebase.firestore.FieldValue.serverTimestamp();
+  const stamp = () => global.FsRest.serverTime;
 
   function loadScript(src) {
     return new Promise((resolve, reject) => {
@@ -44,14 +44,14 @@
     if (!configured()) return Promise.reject(fail('not-configured'));
     if (!booting) {
       booting = (async () => {
-        for (const n of ['app', 'auth', 'firestore']) {
+        for (const n of ['app', 'auth']) {
           await loadScript(`https://www.gstatic.com/firebasejs/${SDK_VERSION}/firebase-${n}-compat.js`);
         }
         if (!global.firebase.apps.length) global.firebase.initializeApp(global.FIREBASE_CONFIG);
         auth = global.firebase.auth();
-        db = global.firebase.firestore();
-        db.settings({ experimentalForceLongPolling: true });
         await auth.signInAnonymously();
+        // Data goes over plain HTTPS (see fsrest.js): the SDK's streaming connection hangs on some phones and networks.
+        db = global.FsRest.client(global.FIREBASE_CONFIG, (force) => auth.currentUser.getIdToken(!!force));
       })().catch((e) => {
         booting = null;
         throw e;
