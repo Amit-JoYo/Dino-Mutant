@@ -14,8 +14,9 @@ No ads, no purchases, no accounts. All progress stays on the device (`localStora
 - **World (הָעוֹלָם):** the whole herd lives on one screen: wandering, eating, playing, sleeping, splashing and visiting each other, with day and night following the device clock. Tap a dino to feed, play, put to sleep, wash, hug, rename, or dress it. Needs decay slowly but never drop below a floor, so dinos get sad but never die.
 - **Dress-up:** 63 items in 6 slots (hats, clothes, glasses, neck, back, tail), bought with DNA.
 - **My Park (הַגַּן שֶׁלִּי):** 10 dino species, each with a legendary version, plus a shop for new ones.
+- **Picture cards:** share a dino card or a progress card to WhatsApp as an image.
 - **Parent mode (מַצַּב הוֹרִים):** behind a small multiplication gate. Paste, edit and delete stories from school, set custom practice words, or reset progress.
-- **Class sharing (optional, off by default):** with Firebase configured, a parent can enable it, join a class by code with the child's first name, choose up to 3 dinos to show, and delete all online data at any time. Classmates' dinos then visit in a "הַכִּתָּה" view of the World tab. Only a first name and the chosen dinos are shared: no chat, pictures or personal details. The owner manages classes and names from `admin.html`. See `plan.md` section 8 for setup.
+- **Class sharing (optional, off by default):** with Firebase configured, a parent can enable it, join a class by code with the child's first name, choose up to 3 dinos to show, and delete all online data at any time. Classmates' dinos then visit in a "הַכִּתָּה" view of the World tab, where kids can send emoji reactions and gift a copy of a dino (one a day). Only a first name and the chosen dinos are shared: no chat, pictures or personal details. The owner manages classes and names from `admin.html`. See `plan.md` section 8 for setup.
 
 ## Run locally
 

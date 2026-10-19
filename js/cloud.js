@@ -133,13 +133,29 @@
     c.className = '';
     c.name = '';
     c.locked = false;
+    c.seen = 0;
     global.App.save();
+  }
+
+  /* Names of classmates by member id, filled whenever the member list is read. Never trusted from reaction/gift documents. */
+  const nameCache = {};
+  const REACTIONS = { wave: '👋', heart: '❤️', party: '🎉', star: '⭐' };
+  const today = () => new Date().toISOString().slice(0, 10);
+
+  async function purgeMine(c) {
+    for (const sub of ['reactions', 'gifts']) {
+      try {
+        const snap = await db.collection(`classes/${c.code}/members/${auth.currentUser.uid}/${sub}`).get();
+        await Promise.all(snap.docs.map((d) => d.ref.delete()));
+      } catch (e) { /* best effort */ }
+    }
   }
 
   async function leave() {
     const c = cfg();
     if (c.code) {
       await boot();
+      await purgeMine(c);
       await memberRef(c.code).delete();
     }
     clearLocal();
@@ -155,7 +171,10 @@
       return;
     }
     await boot();
-    if (c.code) await memberRef(c.code).delete();
+    if (c.code) {
+      await purgeMine(c);
+      await memberRef(c.code).delete();
+    }
     try {
       await auth.currentUser.delete();
     } catch (e) { /* the member record is already gone */ }
@@ -164,6 +183,73 @@
     c.showcase = [];
     global.App.save();
   }
+
+  async function sendReaction(targetId, kind) {
+    const c = cfg();
+    if (!REACTIONS[kind] || !c.code) throw fail('reaction');
+    await boot();
+    await db.doc(`classes/${c.code}/members/${targetId}/reactions/${auth.currentUser.uid}`).set({ kind, at: stamp() });
+  }
+
+  async function sendGift(targetId, dino) {
+    const c = cfg();
+    if (!c.code) throw fail('gift');
+    if (c.lastGiftDay === today()) throw fail('gift-limit');
+    await boot();
+    const tint = Number.isFinite(dino.tint) ? Math.abs(Math.floor(dino.tint)) % 20 : 0;
+    await db.doc(`classes/${c.code}/members/${targetId}/gifts/${auth.currentUser.uid}`).set({ species: dino.species, tint, at: stamp() });
+    c.lastGiftDay = today();
+    global.App.save();
+  }
+
+  /* Reactions received since the last check, with the sender's current name. */
+  async function incomingReactions() {
+    const c = cfg();
+    if (!inClass()) return [];
+    await boot();
+    const snap = await db.collection(`classes/${c.code}/members/${auth.currentUser.uid}/reactions`).get();
+    const seen = c.seen || 0;
+    let max = seen;
+    const fresh = [];
+    snap.docs.forEach((doc) => {
+      const d = doc.data();
+      const t = d.at && d.at.toMillis ? d.at.toMillis() : 0;
+      max = Math.max(max, t);
+      if (t > seen && REACTIONS[d.kind]) fresh.push({ from: doc.id, emoji: REACTIONS[d.kind] });
+    });
+    if (!fresh.length) return [];
+    if (fresh.some((r) => !nameCache[r.from])) await classmates();
+    c.seen = max;
+    global.App.save();
+    return fresh.map((r) => ({ emoji: r.emoji, name: nameCache[r.from] || '' }));
+  }
+
+  async function pendingGifts() {
+    const c = cfg();
+    if (!inClass()) return [];
+    await boot();
+    const snap = await db.collection(`classes/${c.code}/members/${auth.currentUser.uid}/gifts`).get();
+    const species = global.Renderer.SPECIES;
+    const list = snap.docs
+      .map((doc) => ({ from: doc.id, species: doc.data().species, tint: doc.data().tint }))
+      .filter((g) => species[g.species] && g.species !== 'trex');
+    if (list.some((g) => !nameCache[g.from])) await classmates();
+    return list.map((g) => ({
+      from: g.from,
+      species: g.species,
+      tint: Number.isFinite(g.tint) ? Math.abs(Math.floor(g.tint)) % 20 : 0,
+      name: nameCache[g.from] || '',
+    }));
+  }
+
+  /* Deleting the gift document is what claims it, so a gift can be accepted only once. */
+  async function claimGift(from) {
+    const c = cfg();
+    await boot();
+    await db.doc(`classes/${c.code}/members/${auth.currentUser.uid}/gifts/${from}`).delete();
+  }
+
+  const canGiftToday = () => cfg().lastGiftDay !== today();
 
   /* Classmates' showcased dinos. Everything from the server is treated as untrusted and re-validated. */
   async function classmates() {
@@ -178,6 +264,7 @@
       const m = doc.data();
       const name = cleanName(m.name);
       if (!name) return;
+      nameCache[doc.id] = name;
       const dinos = (Array.isArray(m.dinos) ? m.dinos : [])
         .slice(0, MAX_SHOWCASE)
         .filter((d) => d && species[d.species])
@@ -215,6 +302,7 @@
       case 'class': return 'הַכִּתָּה לֹא נִמְצֵאת אוֹ שֶׁהִיא לֹא פְּעִילָה';
       case 'not-configured': return 'הַשִּׁתּוּף בַּכִּתָּה עֲדַיִן לֹא פָּעִיל';
       case 'permission-denied': return 'אֵין הַרְשָׁאָה. אוּלַי הַשֵּׁם נָעוּל אוֹ שֶׁהַכִּתָּה כְּבָר לֹא פְּעִילָה';
+      case 'gift-limit': return 'אֶפְשָׁר לִשְׁלֹחַ מַתָּנָה אַחַת בְּיוֹם. נִסּוּ מָחָר 🎁';
       default: return 'אֵין חִבּוּר לָאִינְטֶרְנֶט. נַסּוּ שׁוּב';
     }
   }
@@ -314,5 +402,5 @@
     };
   }
 
-  global.Cloud = { configured, inClass, classmates, mountParent, autoSync, deleteAll, cleanName };
+  global.Cloud = { configured, inClass, classmates, mountParent, autoSync, deleteAll, cleanName, errorText, REACTIONS, sendReaction, sendGift, canGiftToday, incomingReactions, pendingGifts, claimGift };
 })(window);

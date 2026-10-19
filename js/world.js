@@ -53,7 +53,7 @@
     { e: '🌼', x: 78, y: 92, k: 5 },
   ];
 
-  const state = { on: false, token: 0, sprites: new Map(), sel: null, interval: 0, refreshT: 0, lock: false, saveT: 0, mode: 'mine' };
+  const state = { on: false, token: 0, sprites: new Map(), sel: null, interval: 0, refreshT: 0, incomingT: 0, lock: false, saveT: 0, mode: 'mine' };
   const MAX_VISITORS = 24;
 
   /* ------------------------------------------------------------------ pet stats */
@@ -428,6 +428,7 @@
           <button class="btn pa alt" data-pet="play"><span>⚽</span>לְשַׂחֵק</button>
           <button class="btn pa pink" data-pet="hug"><span>🤗</span>חִבּוּק</button>
         </div>
+        <div class="react-row">${Object.keys(global.Cloud.REACTIONS).map((k) => `<button class="react" data-react="${k}" aria-label="${k}">${global.Cloud.REACTIONS[k]}</button>`).join('')}<button class="btn small gold" data-gift="1">🎁 מַתָּנָה</button></div>
         <div class="food-row" id="food-row" hidden>${FOODS.map((f) => `<button class="food" data-food="${f.id}"><span>${f.e}</span><small>${f.name}</small></button>`).join('')}</div>
         <button class="btn ghost small" data-pet="close">סְגִירָה ✖</button>`;
       $('pet-name').textContent = d.owner;
@@ -456,6 +457,7 @@
         <button class="btn pa aqua" data-pet="wash"><span>🛁</span>לִרְחֹץ</button>
         <button class="btn pa pink" data-pet="hug"><span>🤗</span>חִבּוּק</button>
         <button class="btn pa gold" data-pet="dress"><span>👗</span>לְהַלְבִּישׁ</button>
+        <button class="btn pa aqua" data-pet="share"><span>📤</span>שִׁתּוּף</button>
       </div>
       <div class="food-row" id="food-row" hidden>${FOODS.map((f) => `<button class="food" data-food="${f.id}"><span>${f.e}</span><small>${f.name}</small></button>`).join('')}</div>
       <button class="btn ghost small" data-pet="close">סְגִירָה ✖</button>`;
@@ -552,6 +554,16 @@
       doAction('feed', f.dataset.food);
       return;
     }
+    const sel = state.sel;
+    const r = e.target.closest('[data-react]');
+    if (r && sel && sel.d.visitor) {
+      global.Social.react(sel.d, r.dataset.react, panelSay);
+      return;
+    }
+    if (e.target.closest('[data-gift]') && sel && sel.d.visitor) {
+      global.Social.gift(sel.d);
+      return;
+    }
     const b = e.target.closest('[data-pet]');
     if (!b || !state.sel) return;
     const kind = b.dataset.pet;
@@ -563,6 +575,8 @@
       if (!state.lock) openWardrobe(state.sel.d.uid, null, () => { refreshSprite(state.sel); renderPanel(); });
     } else if (kind === 'rename') {
       renameDino(state.sel);
+    } else if (kind === 'share') {
+      global.Share.shareDino(state.sel.d);
     } else {
       doAction(kind);
     }
@@ -690,7 +704,7 @@
     const out = [];
     for (let round = 0; out.length < MAX_VISITORS && round < 3; round++) {
       list.forEach((m) => {
-        if (out.length < MAX_VISITORS && m.dinos[round]) out.push(Object.assign({}, m.dinos[round], { owner: m.name, key: `${m.id}:${round}` }));
+        if (out.length < MAX_VISITORS && m.dinos[round]) out.push(Object.assign({}, m.dinos[round], { owner: m.name, ownerId: m.id, key: `${m.id}:${round}` }));
       });
     }
     return out;
@@ -731,6 +745,21 @@
     if (alive(my)) state.refreshT = setInterval(() => load(false), 45000);
   }
 
+  /* Reactions classmates sent since the last visit pop up above your dinos. */
+  async function checkIncoming() {
+    const Cloud = global.Cloud;
+    if (!state.on || !Cloud || !Cloud.inClass()) return;
+    try {
+      const list = await Cloud.incomingReactions();
+      if (!list.length || !state.on) return;
+      const mine = state.mode === 'mine' ? [...state.sprites.values()] : [];
+      list.forEach((r, i) => {
+        if (mine.length) say(mine[i % mine.length], `${r.name || 'חָבֵר'} ${r.emoji}`, 5000);
+      });
+      global.App.toast(list.map((r) => `${r.name || 'חָבֵר'} ${r.emoji}`).join('   '));
+    } catch (e) { /* offline: try again later */ }
+  }
+
   function enter() {
     const App = global.App;
     leave();
@@ -743,6 +772,12 @@
     $('pet-panel').hidden = true;
     state.sel = null;
     state.interval = setInterval(periodic, 30000);
+    state.incomingT = setInterval(checkIncoming, 45000);
+    setTimeout(() => {
+      if (!alive(my)) return;
+      checkIncoming();
+      if (global.Social) global.Social.offerGifts();
+    }, 1200);
     if (state.mode === 'class') {
       enterClass(my);
       return;
@@ -763,6 +798,7 @@
     state.token++;
     clearInterval(state.interval);
     clearInterval(state.refreshT);
+    clearInterval(state.incomingT);
     state.sel = null;
     state.lock = false;
     if ($('pet-panel')) $('pet-panel').hidden = true;

@@ -3,6 +3,10 @@
 ## Unreleased
 
 ### Added
+- **Picture cards for WhatsApp:** share a dino card (care panel) or a progress card ("הַגַּן שֶׁלִּי") as an image, through the phone's share sheet or as a download. Works without any server.
+- **Emoji reactions:** send 👋 ❤️ 🎉 ⭐ to a classmate's visiting dino. The classmate sees who sent it above their dinos.
+- **Gifts:** give a classmate a copy of one of your dinos (you keep yours). One gift per day; legendaries, the starter T-Rex and received gifts can't be gifted. Received dinos show "🎁 מַתָּנָה" in the park.
+- `firestore.rules` extended for reactions and gifts (publish it again).
 - **Class world:** once a child has joined a class, the World tab gets a "הַכִּתָּה" toggle showing classmates' showcased dinos (with their first names) wandering together. Visiting dinos can be fed, played with and hugged but never changed, and refresh every 45 seconds. Data from the server is re-validated before drawing.
 - **Class sharing groundwork (off until configured):** parent-mode consent switch, join a class by code with a first name, choose up to 3 dinos to show, rename, leave, and delete all online data. Backed by Firebase (anonymous auth + Firestore).
 - `admin.html` for the owner: create and switch off classes, rename, lock or remove members.

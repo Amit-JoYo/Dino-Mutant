@@ -25,7 +25,7 @@
       solved: 0,
       trips: 0,
       wardrobe: [],
-      cloud: { on: false, code: '', className: '', name: '', locked: false, showcase: [] },
+      cloud: { on: false, code: '', className: '', name: '', locked: false, showcase: [], seen: 0, lastGiftDay: '' },
     };
   }
 
@@ -287,6 +287,7 @@
             <div class="mini">${App.dinoHtml(d)}</div>
             <b>${App.dinoName(d)}</b>
             ${d.legendary ? '<small>🌟 אַגָּדִי</small>' : `<small>${R().TRAITS[R().SPECIES[d.species].trait].icon} ${R().TRAITS[R().SPECIES[d.species].trait].name}</small>`}
+            ${d.gift ? `<small>🎁 מַתָּנָה${d.giftFrom ? ` מֵ${esc(d.giftFrom)}` : ''}</small>` : ''}
             <button class="btn small" data-active="${d.uid}" ${d.uid === st.active ? 'disabled' : ''}>${d.uid === st.active ? '✔ בַּחוּר' : 'בַּחֲרִי'}</button>
           </div>`
         )
@@ -477,6 +478,7 @@
       global.Reading.init();
       global.Expedition.init();
       global.World.init();
+      global.Share.init();
       global.Cloud.autoSync();
       App.refreshHud();
       App.mountLabPuzzle();

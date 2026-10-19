@@ -28,6 +28,22 @@ service cloud.firestore {
         && d.dinos is list && d.dinos.size() <= 3;
     }
 
+    function validReaction() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['kind', 'at'])
+        && d.kind in ['wave', 'heart', 'party', 'star']
+        && d.at == request.time;
+    }
+
+    // Gifts are regular dinos only (no legendaries, no starter T-Rex).
+    function validGift() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['species', 'tint', 'at'])
+        && d.species in ['brachio', 'trike', 'ptero', 'stego', 'anky', 'raptor', 'para', 'spino', 'plesio']
+        && d.tint is int && d.tint >= 0 && d.tint < 20
+        && d.at == request.time;
+    }
+
     match /admins/{id} {
       allow read: if signedIn() && request.auth.uid == id;
       allow write: if false;
@@ -40,6 +56,31 @@ service cloud.firestore {
       allow write: if isAdmin();
 
       match /members/{uid} {
+        // Emoji reactions: one document per sender, so a sender can only overwrite (not flood), at most every 5 seconds.
+        // The sender's name is never stored here; the receiver looks it up from the member list.
+        match /reactions/{from} {
+          allow read: if (signedIn() && request.auth.uid == uid) || isAdmin();
+          allow create: if signedIn() && request.auth.uid == from && from != uid
+            && isMember(code) && classIsActive(code)
+            && exists(/databases/$(database)/documents/classes/$(code)/members/$(uid))
+            && validReaction();
+          allow update: if signedIn() && request.auth.uid == from
+            && isMember(code) && classIsActive(code)
+            && validReaction()
+            && request.time > resource.data.at + duration.value(5, 's');
+          allow delete: if (signedIn() && (request.auth.uid == uid || request.auth.uid == from)) || isAdmin();
+        }
+
+        // Gifts: one pending gift per sender (the document id is the sender), removed by the receiver when accepted.
+        match /gifts/{from} {
+          allow read: if (signedIn() && request.auth.uid == uid) || isAdmin();
+          allow create: if signedIn() && request.auth.uid == from && from != uid
+            && isMember(code) && classIsActive(code)
+            && exists(/databases/$(database)/documents/classes/$(code)/members/$(uid))
+            && validGift();
+          allow delete: if (signedIn() && request.auth.uid == uid) || isAdmin();
+        }
+
         allow read: if (signedIn() && request.auth.uid == uid)
           || (isMember(code) && classIsActive(code))
           || isAdmin();
