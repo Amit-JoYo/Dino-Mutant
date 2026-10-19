@@ -159,11 +159,18 @@
       $('status').textContent = 'js/firebase-config.js עדיין ריק';
       return;
     }
+    $('status').textContent = 'טוען ספריות…';
     for (const n of ['app', 'auth']) {
       await loadScript(`https://www.gstatic.com/firebasejs/${SDK_VERSION}/firebase-${n}-compat.js`);
     }
+    $('status').textContent = 'מתחבר…';
     const app = firebase.initializeApp(window.FIREBASE_CONFIG, 'admin');
     auth = app.auth();
+    // If the browser never reports a sign-in state (for example storage is blocked), say so instead of waiting forever.
+    const watchdog = setTimeout(() => {
+      $('status').textContent = 'הדפדפן לא החזיר מצב התחברות. נסו Chrome רגיל (לא חלון פרטי ולא דפדפן בתוך אפליקציה) ובדקו שהאחסון לא חסום.';
+    }, 15000);
+    auth.onAuthStateChanged((u) => { clearTimeout(watchdog); onUser(u); });
     // Data goes over plain HTTPS (js/fsrest.js): the SDK's streaming connection hangs on some phones and networks.
     db = FsRest.client(window.FIREBASE_CONFIG, (force) => auth.currentUser.getIdToken(!!force));
     let signingIn = false;
@@ -189,7 +196,6 @@
       $('new-name').value = '';
       loadClasses();
     };
-    auth.onAuthStateChanged(onUser);
   }
 
   start().catch((e) => { $('status').textContent = 'שגיאה: ' + e.message; });
