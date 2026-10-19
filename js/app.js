@@ -144,7 +144,7 @@
       t.textContent = msg;
       t.hidden = false;
       clearTimeout(App._toastTimer);
-      App._toastTimer = setTimeout(() => (t.hidden = true), 2800);
+      App._toastTimer = setTimeout(() => (t.hidden = true), Math.min(9000, Math.max(2800, String(msg).length * 90)));
     },
 
     /* ---- modal + celebration ---- */
@@ -368,6 +368,7 @@
         <div id="p-cloud"></div>
         <h3>🧹 אִתְחוּל</h3>
         <button class="btn small danger" id="p-reset">מְחִיקַת כׇּל הַהִתְקַדְּמוּת</button>
+        <p class="muted" id="p-ver"></p>
         <div class="row"><button class="btn ghost" data-close>סְגִירָה</button></div>`);
 
       if (editing) {
@@ -375,6 +376,12 @@
         $('p-text').value = editing.text;
       }
       global.Cloud.mountParent($('p-cloud'));
+      if (global.caches) {
+        global.caches.keys().then((keys) => {
+          const v = keys.find((k) => k.startsWith('dino-mutant-'));
+          if (v && $('p-ver')) $('p-ver').textContent = `גִּרְסָה: ${v.replace('dino-mutant-', '')}`;
+        }).catch(() => {});
+      }
       $('p-add').onclick = () => {
         const title = $('p-title').value.trim() || 'סִפּוּר חָדָשׁ';
         const text = $('p-text').value.trim();

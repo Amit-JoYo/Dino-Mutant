@@ -27,7 +27,20 @@
     });
   }
 
+  /* Rejects with a code naming the step that hung, so the child's parent sees which step is stuck instead of nothing. */
+  function within(promise, ms, code) {
+    let timer;
+    return Promise.race([
+      promise,
+      new Promise((_, reject) => { timer = setTimeout(() => reject(fail(code)), ms); }),
+    ]).finally(() => clearTimeout(timer));
+  }
+
   function boot() {
+    return within(bootRaw(), 25000, 'timeout-start');
+  }
+
+  function bootRaw() {
     if (!configured()) return Promise.reject(fail('not-configured'));
     if (!booting) {
       booting = (async () => {
@@ -79,18 +92,18 @@
     if (code.length < 6) throw fail('code');
     if (name.length < 2) throw fail('name');
     await boot();
-    const cls = await db.doc(`classes/${code}`).get();
+    const cls = await within(db.doc(`classes/${code}`).get(), 20000, 'timeout-class');
     if (!cls.exists || !cls.data().active) throw fail('class');
     const c = cfg();
     if (!c.showcase.length) c.showcase = global.App.state.dinos.slice(0, MAX_SHOWCASE).map((d) => d.uid);
     const ref = memberRef(code);
-    const mine = await ref.get();
+    const mine = await within(ref.get(), 20000, 'timeout-member');
     if (mine.exists) {
-      await ref.update({ dinos: showcasePayload(), updatedAt: stamp() });
+      await within(ref.update({ dinos: showcasePayload(), updatedAt: stamp() }), 20000, 'timeout-save');
       c.name = mine.data().name;
       c.locked = !!mine.data().locked;
     } else {
-      await ref.set({ name, locked: false, dinos: showcasePayload(), updatedAt: stamp() });
+      await within(ref.set({ name, locked: false, dinos: showcasePayload(), updatedAt: stamp() }), 20000, 'timeout-save');
       c.name = name;
       c.locked = false;
     }
@@ -304,6 +317,8 @@
       case 'not-configured': return 'הַשִּׁתּוּף בַּכִּתָּה עֲדַיִן לֹא פָּעִיל';
       case 'permission-denied': return 'אֵין הַרְשָׁאָה. אוּלַי הַשֵּׁם נָעוּל אוֹ שֶׁהַכִּתָּה כְּבָר לֹא פְּעִילָה';
       case 'gift-limit': return 'אֶפְשָׁר לִשְׁלֹחַ מַתָּנָה אַחַת בְּיוֹם. נִסּוּ מָחָר 🎁';
+      case 'timeout-start': return 'הַחִבּוּר לַשְּׁרָת לֹא הִצְלִיחַ (timeout-start). בִּדְקוּ אִינְטֶרְנֶט, נַסּוּ רֶשֶׁת אַחֶרֶת, וְכַבּוּ חוֹסֵם פִּרְסוֹמוֹת אוֹ סִנּוּן';
+      case 'timeout-class': case 'timeout-member': case 'timeout-save': return `הַשַּׁרָת לֹא עָנָה בַּזְּמַן (${e.code}). נַסּוּ שׁוּב אוֹ רֶשֶׁת אַחֶרֶת`;
       default: {
         if (e) console.warn('cloud error', e);
         const code = e && (e.code || e.message);
@@ -318,6 +333,7 @@
     const c = cfg();
 
     const run = async (fn, okMsg) => {
+      App.toast('מִתְחַבְּרִים...');
       try {
         await fn();
         if (okMsg) App.toast(okMsg);

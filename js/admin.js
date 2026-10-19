@@ -37,10 +37,24 @@
     document.head.appendChild(s);
   });
 
+  const withTimeout = (promise, ms) => {
+    let timer;
+    return Promise.race([
+      promise,
+      new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('אין תשובה מהשרת (timeout). בדקו חיבור, רשת אחרת או כיבוי חוסם פרסומות')), ms); }),
+    ]).finally(() => clearTimeout(timer));
+  };
+
   async function loadClasses() {
     const box = $('classes');
     box.replaceChildren(h('p', { class: 'muted' }, 'טוען…'));
-    const snap = await db.collection('classes').get();
+    let snap;
+    try {
+      snap = await withTimeout(db.collection('classes').get(), 20000);
+    } catch (e) {
+      box.replaceChildren(h('p', { class: 'muted' }, `שגיאה בטעינת הכיתות: ${e.code || e.message}`), h('button', { onclick: loadClasses }, 'ניסיון חוזר'));
+      return;
+    }
     box.replaceChildren();
     if (snap.empty) box.append(h('p', { class: 'muted' }, 'אין כיתות עדיין'));
     snap.docs.forEach((doc) => box.append(classCard(doc.id, doc.data())));
@@ -66,7 +80,13 @@
 
   async function showMembers(code, box) {
     box.replaceChildren(h('p', { class: 'muted' }, 'טוען…'));
-    const snap = await db.collection(`classes/${code}/members`).get();
+    let snap;
+    try {
+      snap = await withTimeout(db.collection(`classes/${code}/members`).get(), 20000);
+    } catch (e) {
+      box.replaceChildren(h('p', { class: 'muted' }, `שגיאה בטעינת החברים: ${e.code || e.message}`));
+      return;
+    }
     if (snap.empty) {
       box.replaceChildren(h('p', { class: 'muted' }, 'אין חברים'));
       return;
