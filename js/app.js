@@ -7,7 +7,7 @@
   const esc = (s) => global.Puzzles.escapeHtml(s);
   const R = () => global.Renderer;
 
-  const LEGEND_ORDER = ['trex', 'brachio', 'trike', 'ptero'];
+  const LEGEND_ORDER = ['trex', 'brachio', 'trike', 'ptero', 'stego', 'anky', 'raptor', 'para', 'spino', 'plesio'];
   const MUTATE_COST = 10;
 
   function defaults() {
@@ -24,6 +24,7 @@
       streak: 0,
       solved: 0,
       trips: 0,
+      wardrobe: [],
     };
   }
 
@@ -37,6 +38,8 @@
     const s = Object.assign(defaults(), saved || {});
     if (!Array.isArray(s.dinos) || !s.dinos.length) s.dinos = defaults().dinos;
     if (!s.dinos.some((d) => d.uid === s.active)) s.active = s.dinos[0].uid;
+    s.dinos = s.dinos.filter((d) => global.Renderer.SPECIES[d.species]);
+    s.wardrobe = Array.from(new Set((Array.isArray(s.wardrobe) ? s.wardrobe : []).concat(global.Wardrobe.STARTERS)));
     s.seeded = true; // sample stories now come from stories.json, not local storage
     return s;
   }
@@ -95,11 +98,12 @@
       App.save();
     },
 
-    dinoHtml(d) {
-      return R().dino(d.species, { tint: d.tint, legendary: d.legendary, horns: d.horns, eggs: d.eggs });
+    dinoHtml(d, extra) {
+      return R().dino(d.species, Object.assign({ tint: d.tint, legendary: d.legendary, horns: d.horns, eggs: d.eggs, outfit: d.outfit }, extra));
     },
 
     dinoName(d) {
+      if (d.name) return d.name;
       const sp = R().SPECIES[d.species];
       return d.legendary ? sp.legendName : sp.short;
     },
@@ -215,7 +219,9 @@
       document.querySelectorAll('.tabbar button').forEach((b) => b.classList.toggle('on', b.dataset.tab === name));
       if (name !== 'trail') global.Expedition.stop();
       if (name !== 'read') global.Reading.stopListening();
+      if (name !== 'world') global.World.leave();
       if (name === 'lab') App.renderLabDino();
+      if (name === 'world') global.World.enter();
       if (name === 'zoo') App.renderZoo();
       if (name === 'trail') global.Expedition.renderIntro();
       if (name === 'read') global.Reading.renderLibrary();
@@ -433,6 +439,7 @@
         setTimeout(() => $('lab-dino').classList.remove('jump'), 900);
       });
       $('btn-mutate').addEventListener('click', App.mutate);
+      $('btn-dress').addEventListener('click', () => global.World.openWardrobe(App.activeDino().uid, null, App.renderLabDino));
       $('btn-next-puzzle').addEventListener('click', App.mountLabPuzzle);
       $('zoo-grid').addEventListener('click', (e) => {
         const b = e.target.closest('[data-active]');
@@ -460,6 +467,7 @@
 
       global.Reading.init();
       global.Expedition.init();
+      global.World.init();
       App.refreshHud();
       App.mountLabPuzzle();
       App.showTab('lab');

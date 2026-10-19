@@ -69,6 +69,10 @@ Support 4 distinct body shapes: Theropod (T-Rex), Sauropod (Brachiosaurus), Cera
 
 A side-scrolling trail where dinosaurs encounter 3 checkpoints with obstacles cleared by matched traits or 2nd-grade puzzles.
 
-6. Parent Menu (מצב הורים)
+6. Dino World, Care & Dress-up (js/world.js, js/wardrobe.js)
+
+A "העולם" tab shows the whole herd living in one scene (wandering, eating, playing, sleeping, splashing, visiting each other; day/night by the device clock). Tapping a dino opens a Tamagotchi-style care panel (feed / play / sleep / wash / hug / rename / dress up). Stats decay slowly with real time but never drop below a floor, so dinos get sad but never die. Care earns at most +1 DNA, and only when the need was real. Dress-up has 6 slots (hat, clothes, glasses, neck, back, tail), items are bought with DNA and shared across dinos. 10 species in total (stego, anky, raptor, para, spino, plesio were added), each with a legendary version and new trail obstacles.
+
+7. Parent Menu (מצב הורים)
 
 Local settings modal where parents can paste weekly school reading texts and custom Hebrew words, saving them directly to localStorage.

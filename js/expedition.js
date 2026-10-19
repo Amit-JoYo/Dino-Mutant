@@ -3,10 +3,13 @@
   'use strict';
 
   const OBSTACLES = [
-    { id: 'log', emoji: '🪵', need: 'bite', title: 'גֶּזַע עֵץ חוֹסֵם אֶת הַדֶּרֶךְ', tip: 'צָרִיךְ לִנְשֹׁךְ אוֹתוֹ וּלְפַצֵּל' },
-    { id: 'nest', emoji: '🪺', need: 'neck', title: 'קֵן עִם בֵּיצִים נוֹצְצוֹת תָּלוּי עַל עֵץ גָּבוֹהַּ', tip: 'צָרִיךְ צַוָּאר אָרֹךְ כְּדֵי לְהַגִּיעַ' },
-    { id: 'rock', emoji: '🪨', need: 'horn', title: 'סֶלַע עֲנָק חוֹסֵם אֶת הַשְּׁבִיל', tip: 'צָרִיךְ קֶרֶן חֲזָקָה כְּדֵי לִדְחֹף אוֹתוֹ' },
-    { id: 'river', emoji: '🌊', need: 'fly', title: 'נָהָר רָחָב חוֹסֵם אֶת הַדֶּרֶךְ', tip: 'צָרִיךְ לָעוּף מֵעַל הַמַּיִם' },
+    { id: 'log', emoji: '🪵', need: ['bite'], title: 'גֶּזַע עֵץ חוֹסֵם אֶת הַדֶּרֶךְ', tip: 'צָרִיךְ לִנְשֹׁךְ אוֹתוֹ וּלְפַצֵּל' },
+    { id: 'nest', emoji: '🪺', need: ['neck'], title: 'קֵן עִם בֵּיצִים נוֹצְצוֹת תָּלוּי עַל עֵץ גָּבוֹהַּ', tip: 'צָרִיךְ צַוָּאר אָרֹךְ כְּדֵי לְהַגִּיעַ' },
+    { id: 'rock', emoji: '🪨', need: ['horn'], title: 'סֶלַע עֲנָק חוֹסֵם אֶת הַשְּׁבִיל', tip: 'צָרִיךְ קֶרֶן חֲזָקָה כְּדֵי לִדְחֹף אוֹתוֹ' },
+    { id: 'river', emoji: '🌊', need: ['fly', 'swim'], title: 'נָהָר רָחָב חוֹסֵם אֶת הַדֶּרֶךְ', tip: 'צָרִיךְ לָעוּף אוֹ לִשְׂחוֹת מֵעַל הַמַּיִם' },
+    { id: 'thorns', emoji: '🌵', need: ['armor'], title: 'שִׂיחֵי קוֹצִים חוֹסְמִים אֶת הַשְּׁבִיל', tip: 'צָרִיךְ שִׁרְיוֹן חָזָק כְּדֵי לַעֲבֹר' },
+    { id: 'canyon', emoji: '🏜️', need: ['speed'], title: 'מַכְתֵּשׁ רָחָב בְּאֶמְצַע הַדֶּרֶךְ', tip: 'צָרִיךְ לָרוּץ מַהֵר וְלִקְפֹּץ לַצַּד הַשֵּׁנִי' },
+    { id: 'bats', emoji: '🦇', need: ['roar'], title: 'עֶדְרֵי עֲטַלֵּפִים חוֹסְמִים אֶת הַמְּעָרָה', tip: 'צָרִיךְ שְׁאָגָה אַדִּירָה כְּדֵי לְהַבְרִיחַ אוֹתָם' },
   ];
 
   const $ = (id) => document.getElementById(id);
@@ -17,11 +20,13 @@
     return a.map((x) => [Math.random(), x]).sort((p, q) => p[0] - q[0]).map((p) => p[1]);
   }
 
-  function hasTrait(dino, trait) {
+  function hasTrait(dino, needs) {
     if (dino.legendary) return true;
-    if (global.Renderer.SPECIES[dino.species].trait === trait) return true;
-    return trait === 'horn' && dino.horns > 0;
+    const mine = global.Renderer.SPECIES[dino.species].trait;
+    return needs.some((n) => n === mine) || (needs.includes('horn') && dino.horns > 0);
   }
+
+  const traitLabel = (needs) => needs.map((n) => `${global.Renderer.TRAITS[n].icon} ${global.Renderer.TRAITS[n].name}`).join(' / ');
 
   function renderIntro() {
     const App = global.App;
@@ -108,10 +113,10 @@
     return new Promise((resolve) => {
       const panel = $('trail-panel');
       const ok = hasTrait(dino, o.need);
-      const trait = global.Renderer.TRAITS[o.need];
+      const trait = traitLabel(o.need);
       panel.innerHTML = `
         <div class="obs-title">${o.emoji} ${o.title}</div>
-        <div class="obs-tip">${o.tip} (${trait.icon} ${trait.name})</div>
+        <div class="obs-tip">${o.tip} (${trait})</div>
         <div class="obs-actions">
           <button class="btn big" id="btn-ability" ${ok ? '' : 'disabled'}>✨ לְהִשְׁתַּמֵּשׁ בַּיְּכֹלֶת</button>
           <button class="btn big alt" id="btn-puzzle">🧩 לִפְתֹּר חִידָה (+8 דנ״א)</button>
@@ -120,7 +125,7 @@
         <div id="trail-puzzle"></div>`;
       $('btn-ability').onclick = () => {
         if (my !== token) return;
-        panel.innerHTML = `<div class="obs-title good">${trait.icon} הַיְּכֹלֶת עָבְדָה! (+4 דנ״א)</div>`;
+        panel.innerHTML = `<div class="obs-title good">✨ הַיְּכֹלֶת עָבְדָה! (+4 דנ״א)</div>`;
         resolve(4);
       };
       $('btn-puzzle').onclick = () => {

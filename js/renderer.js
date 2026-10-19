@@ -11,6 +11,18 @@
       legendName: 'טְרִיצֶרָטוֹפְּס הָאֵשׁ' },
     ptero: { name: 'פְּטֵרוֹדַקְטִיל', short: 'פְּטֵרוֹדַקְטִיל', trait: 'fly', cost: 50,
       legendName: 'פְּטֵרוֹדַקְטִיל הַגָּלַקְסְיָה' },
+    stego: { name: 'סְטֶגוֹזָאוּרוּס', short: 'סְטֶגוֹזָאוּר', trait: 'armor', cost: 55,
+      legendName: 'סְטֶגוֹזָאוּר הַיַּהֲלוֹם' },
+    anky: { name: 'אַנְקִילוֹזָאוּרוּס', short: 'אַנְקִילוֹזָאוּר', trait: 'armor', cost: 60,
+      legendName: 'אַנְקִילוֹזָאוּר הַבַּרְזֶל' },
+    raptor: { name: 'וֵלוֹצִירַפְּטוֹר', short: 'וֵלוֹצִירַפְּטוֹר', trait: 'speed', cost: 65,
+      legendName: 'וֵלוֹצִירַפְּטוֹר הַבָּרָק' },
+    para: { name: 'פַּרַסוֹרוֹלוֹפוּס', short: 'פַּרַסוֹרוֹלוֹפוּס', trait: 'roar', cost: 70,
+      legendName: 'פַּרַסוֹרוֹלוֹפוּס הַקֶּשֶׁת' },
+    spino: { name: 'סְפִּינוֹזָאוּרוּס', short: 'סְפִּינוֹזָאוּר', trait: 'swim', cost: 80,
+      legendName: 'סְפִּינוֹזָאוּר הַלַּבָּה' },
+    plesio: { name: 'פְּלֶסִיוֹזָאוּר', short: 'פְּלֶסִיוֹזָאוּר', trait: 'swim', cost: 90,
+      legendName: 'פְּלֶסִיוֹזָאוּר הַכּוֹכָבִים' },
   };
 
   const TRAITS = {
@@ -18,6 +30,10 @@
     neck: { icon: '🦒', name: 'צַוָּאר אָרֹךְ' },
     horn: { icon: '🦏', name: 'קֶרֶן חֲזָקָה' },
     fly: { icon: '🕊️', name: 'טִיסָה' },
+    armor: { icon: '🛡️', name: 'שִׁרְיוֹן חָזָק' },
+    speed: { icon: '⚡', name: 'מְהִירוּת בָּרָק' },
+    swim: { icon: '🏊', name: 'שְׂחִיָּה' },
+    roar: { icon: '📣', name: 'שְׁאָגָה אַדִּירָה' },
   };
 
   const TINTS = [
@@ -27,6 +43,10 @@
     { body: '#ff9f5a', dark: '#d97a2b', belly: '#ffe6c8' },
     { body: '#ff7eb6', dark: '#d9548f', belly: '#ffdcec' },
     { body: '#3cc9b5', dark: '#22978a', belly: '#cef6ef' },
+    { body: '#ef6a6a', dark: '#c24444', belly: '#ffd9d9' },
+    { body: '#a8d84a', dark: '#7aa82a', belly: '#f1ffcf' },
+    { body: '#c9955a', dark: '#9a6a38', belly: '#f4e2c8' },
+    { body: '#f2c94c', dark: '#c9a02a', belly: '#fff4c9' },
   ];
 
   const LEGEND_PALETTE = {
@@ -34,11 +54,29 @@
     brachio: { body: '#7fe3ff', dark: '#37a8d6', belly: '#e6fbff' },
     trike: { body: '#ff6a3d', dark: '#c93a12', belly: '#ffd0a8' },
     ptero: { body: '#8a5cff', dark: '#4b2fb8', belly: '#e1d6ff' },
+    stego: { body: '#ff9ad5', dark: '#c4569a', belly: '#ffe0f2' },
+    anky: { body: '#b8c4d6', dark: '#6d7c96', belly: '#eef2f8' },
+    raptor: { body: '#4df0b0', dark: '#14a36f', belly: '#d7fff0' },
+    para: { body: '#b6e84a', dark: '#6ea81f', belly: '#f0ffc9' },
+    spino: { body: '#ff4d4d', dark: '#a81414', belly: '#ffc9a8' },
+    plesio: { body: '#5a5fe0', dark: '#2a2d8a', belly: '#c9ccff' },
   };
 
   const HORN_AT = {
     trex: [236, 58], brachio: [250, 18], trike: [212, 76], ptero: [196, 42],
+    stego: [236, 134], anky: [244, 132], raptor: [240, 50], spino: [228, 64], para: [236, 50], plesio: [230, 38],
   };
+
+  // eye centre + radius, used for the closed-eye lid shown while sleeping
+  const EYE_AT = {
+    trex: [250, 70, 7], brachio: [258, 27, 5.5], trike: [254, 118, 6], ptero: [230, 74, 6],
+    stego: [246, 148, 5.5], anky: [252, 150, 5.5], raptor: [240, 58, 6], spino: [234, 76, 6], para: [232, 62, 6],
+    plesio: [236, 44, 5],
+  };
+
+  const EMPTY_WEAR = { hat: '', face: '', neck: '', clothes: '', back0: '', back1: '', tail: '', lid: '' };
+
+  const topOf = (cx, cy, rx, ry, x) => cy - ry * Math.sqrt(Math.max(0, 1 - ((x - cx) / rx) ** 2));
 
   function eye(x, y, r) {
     return `<circle cx="${x}" cy="${y}" r="${r}" fill="#fff"/><circle cx="${x + 1.5}" cy="${y}" r="${r * 0.5}" fill="#222"/>`;
@@ -49,14 +87,16 @@
   }
 
   const BUILDERS = {
-    trex(p) {
+    trex(p, w) {
       return `
-        <g class="rig-tail"><path d="M96 108 Q46 112 6 160 Q52 150 102 142 Z" fill="${p.body}"/></g>
+        <g class="rig-tail"><path d="M96 108 Q46 112 6 160 Q52 150 102 142 Z" fill="${p.body}"/>${w.tail}</g>
         <g transform="translate(-4,0)"><g class="rig-leg a"><path d="M112 138 Q100 176 112 196 L148 200 Q150 190 134 186 Q138 164 146 138 Z" fill="${p.dark}"/></g></g>
         <g class="rig-body">
+          ${w.back0}
           <ellipse cx="150" cy="122" rx="64" ry="44" fill="${p.body}"/>
           <ellipse cx="160" cy="140" rx="44" ry="26" fill="${p.belly}"/>
           ${spots(p, [[120, 100, 7], [146, 92, 5], [100, 126, 6]])}
+          ${w.clothes}${w.back1}${w.neck}
         </g>
         <g transform="translate(32,0)"><g class="rig-leg b"><path d="M112 138 Q100 176 112 196 L148 200 Q150 190 134 186 Q138 164 146 138 Z" fill="${p.body}"/></g></g>
         <path d="M198 130 q18 4 20 18" stroke="${p.dark}" stroke-width="7" fill="none" stroke-linecap="round"/>
@@ -67,19 +107,22 @@
           <path d="M226 98 l5 9 l5 -9 M242 97 l5 9 l5 -9 M258 96 l5 9 l5 -9" fill="#fff" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>
           ${eye(250, 70, 7)}
           <circle cx="285" cy="76" r="2.5" fill="${p.dark}"/>
+          ${w.hat}${w.face}${w.lid}
         </g>`;
     },
 
-    brachio(p) {
+    brachio(p, w) {
       const leg = (x, c) => `<rect x="${x}" y="150" width="26" height="50" rx="12" fill="${c}"/>`;
       return `
-        <g class="rig-tail"><path d="M78 122 Q34 138 4 176 Q52 162 90 152 Z" fill="${p.body}"/></g>
+        <g class="rig-tail"><path d="M78 122 Q34 138 4 176 Q52 162 90 152 Z" fill="${p.body}"/>${w.tail}</g>
         <g class="rig-leg a">${leg(88, p.dark)}</g>
         <g class="rig-leg b">${leg(116, p.dark)}</g>
         <g class="rig-body">
+          ${w.back0}
           <ellipse cx="148" cy="128" rx="72" ry="42" fill="${p.body}"/>
           <ellipse cx="152" cy="146" rx="50" ry="22" fill="${p.belly}"/>
           ${spots(p, [[116, 108, 8], [148, 100, 6], [176, 112, 7]])}
+          ${w.clothes}${w.back1}${w.neck}
         </g>
         <g class="rig-leg a">${leg(168, p.body)}</g>
         <g class="rig-leg b">${leg(198, p.body)}</g>
@@ -88,19 +131,22 @@
           <ellipse cx="250" cy="32" rx="22" ry="15" fill="${p.body}"/>
           ${eye(258, 27, 5.5)}
           <path d="M252 40 q8 5 16 -1" stroke="${p.dark}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          ${w.hat}${w.face}${w.lid}
         </g>`;
     },
 
-    trike(p) {
+    trike(p, w) {
       const leg = (x, c) => `<rect x="${x}" y="150" width="28" height="50" rx="12" fill="${c}"/>`;
       return `
-        <g class="rig-tail"><path d="M84 138 Q52 148 26 174 Q66 168 94 160 Z" fill="${p.body}"/></g>
+        <g class="rig-tail"><path d="M84 138 Q52 148 26 174 Q66 168 94 160 Z" fill="${p.body}"/>${w.tail}</g>
         <g class="rig-leg a">${leg(96, p.dark)}</g>
         <g class="rig-leg b">${leg(124, p.dark)}</g>
         <g class="rig-body">
+          ${w.back0}
           <ellipse cx="150" cy="134" rx="68" ry="42" fill="${p.body}"/>
           <ellipse cx="156" cy="150" rx="46" ry="22" fill="${p.belly}"/>
           ${spots(p, [[118, 112, 7], [150, 104, 6], [180, 118, 7]])}
+          ${w.clothes}${w.back1}${w.neck}
         </g>
         <g class="rig-leg a">${leg(172, p.body)}</g>
         <g class="rig-leg b">${leg(202, p.body)}</g>
@@ -114,20 +160,23 @@
           <path d="M276 128 L296 112 L290 140 Z" fill="#fff3d6" stroke="#e6cf9c" stroke-width="1.5"/>
           ${eye(254, 118, 6)}
           <path d="M240 142 q14 7 28 0" stroke="${p.dark}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          ${w.hat}${w.face}${w.lid}
         </g>`;
     },
 
-    ptero(p) {
+    ptero(p, w) {
       return `
         <ellipse class="rig-shadow" cx="150" cy="204" rx="60" ry="7" fill="#000" opacity=".12"/>
         <g class="rig-float">
-          <g class="rig-tail"><path d="M118 120 L48 150 L124 136 Z" fill="${p.dark}"/></g>
+          <g class="rig-tail"><path d="M118 120 L48 150 L124 136 Z" fill="${p.dark}"/>${w.tail}</g>
           <g class="rig-leg a"><path d="M138 140 L130 176 M130 176 l-10 4 M130 176 l8 6" stroke="${p.dark}" stroke-width="6" stroke-linecap="round" fill="none"/></g>
           <g class="rig-leg b"><path d="M162 140 L168 176 M168 176 l-10 4 M168 176 l8 6" stroke="${p.dark}" stroke-width="6" stroke-linecap="round" fill="none"/></g>
           <g class="rig-wing far"><path d="M150 104 Q96 14 22 28 Q62 52 56 72 Q96 70 86 98 Q116 94 126 112 Z" fill="${p.dark}" opacity=".7"/></g>
+          ${w.back0}
           <g class="rig-body">
             <ellipse cx="158" cy="120" rx="40" ry="24" fill="${p.body}"/>
             <ellipse cx="164" cy="130" rx="26" ry="12" fill="${p.belly}"/>
+            ${w.clothes}${w.back1}${w.neck}
           </g>
           <g class="rig-wing"><path d="M156 104 Q116 6 28 18 Q76 46 66 70 Q108 68 98 98 Q130 94 140 114 Z" fill="${p.body}" stroke="${p.dark}" stroke-width="3" stroke-linejoin="round"/></g>
           <g class="rig-head">
@@ -135,7 +184,169 @@
             <path d="M212 70 Q240 56 292 70 L298 77 L240 92 L220 94 Z" fill="${p.body}"/>
             <path d="M212 72 Q196 40 168 48 Q196 56 214 82 Z" fill="${p.dark}"/>
             ${eye(230, 74, 6)}
+            ${w.hat}${w.face}${w.lid}
           </g>
+        </g>`;
+    },
+
+    stego(p, w) {
+      const leg = (x, c) => `<rect x="${x}" y="150" width="26" height="50" rx="12" fill="${c}"/>`;
+      const plate = (x, s) => {
+        const y = topOf(150, 128, 72, 40, x) + 6;
+        return `<path d="M${x - 10 * s} ${y} L${x} ${y - 30 * s} L${x + 10 * s} ${y} Z" fill="#ffb347" stroke="#d9842b" stroke-width="2" stroke-linejoin="round"/>`;
+      };
+      return `
+        <g class="rig-tail"><path d="M82 118 Q40 118 6 150 Q50 160 96 150 Z" fill="${p.body}"/>
+          <path d="M30 140 l-4 -18 l12 12 z M48 134 l-2 -18 l12 14 z" fill="#ffe6b0" stroke="#d9a44a" stroke-width="1.5" stroke-linejoin="round"/>${w.tail}</g>
+        <g class="rig-leg a">${leg(94, p.dark)}</g>
+        <g class="rig-leg b">${leg(120, p.dark)}</g>
+        <g class="rig-body">
+          ${w.back0}
+          ${[[102, .7], [124, .95], [148, 1.1], [172, 1], [194, .75]].map(([x, s]) => plate(x, s)).join('')}
+          <ellipse cx="150" cy="128" rx="72" ry="40" fill="${p.body}"/>
+          <ellipse cx="156" cy="146" rx="50" ry="22" fill="${p.belly}"/>
+          ${spots(p, [[116, 112, 7], [146, 104, 5], [176, 112, 6]])}
+          ${w.clothes}${w.back1}${w.neck}
+        </g>
+        <g class="rig-leg a">${leg(170, p.body)}</g>
+        <g class="rig-leg b">${leg(198, p.body)}</g>
+        <g class="rig-head">
+          <path d="M184 106 Q214 108 228 138 L224 168 Q196 152 180 146 Z" fill="${p.body}"/>
+          <path d="M214 140 Q246 130 278 150 Q284 164 266 168 L224 168 Q206 158 214 140 Z" fill="${p.body}"/>
+          <path d="M228 160 q18 8 36 0" stroke="${p.dark}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          ${eye(246, 148, 5.5)}
+          ${w.hat}${w.face}${w.lid}
+        </g>`;
+    },
+
+    anky(p, w) {
+      const leg = (x, c) => `<rect x="${x}" y="158" width="28" height="42" rx="12" fill="${c}"/>`;
+      return `
+        <g class="rig-tail"><path d="M84 136 Q50 144 24 156 L28 174 Q56 170 92 158 Z" fill="${p.body}"/>
+          <circle cx="18" cy="166" r="16" fill="${p.dark}"/>
+          <path d="M6 156 l-4 -10 l12 5 z M24 152 l2 -10 l7 9 z" fill="#fff3d6" stroke="#e6cf9c" stroke-width="1.5" stroke-linejoin="round"/>${w.tail}</g>
+        <g class="rig-leg a">${leg(96, p.dark)}</g>
+        <g class="rig-leg b">${leg(124, p.dark)}</g>
+        <g class="rig-body">
+          ${w.back0}
+          <ellipse cx="150" cy="140" rx="78" ry="36" fill="${p.body}"/>
+          <ellipse cx="156" cy="156" rx="52" ry="18" fill="${p.belly}"/>
+          ${[96, 122, 150, 178, 204].map((x, i) => `<ellipse cx="${x}" cy="${topOf(150, 140, 78, 36, x) + 6}" rx="${9 + (i === 2 ? 3 : 0)}" ry="8" fill="${p.dark}"/><circle cx="${x}" cy="${topOf(150, 140, 78, 36, x) + 4}" r="3" fill="#fff3d6"/>`).join('')}
+          <path d="M80 128 l-12 -6 l8 14 z M220 128 l12 -6 l-8 14 z" fill="#fff3d6" stroke="#e6cf9c" stroke-width="1.5" stroke-linejoin="round"/>
+          ${w.clothes}${w.back1}${w.neck}
+        </g>
+        <g class="rig-leg a">${leg(172, p.body)}</g>
+        <g class="rig-leg b">${leg(200, p.body)}</g>
+        <g class="rig-head">
+          <path d="M214 142 Q250 130 284 150 Q288 166 268 170 L226 170 Q206 160 214 142 Z" fill="${p.body}"/>
+          <path d="M216 138 L204 118 L230 132 Z M232 134 L228 114 L246 130 Z" fill="#fff3d6" stroke="#e6cf9c" stroke-width="1.5" stroke-linejoin="round"/>
+          <path d="M232 162 q18 7 36 0" stroke="${p.dark}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          ${eye(252, 150, 5.5)}
+          ${w.hat}${w.face}${w.lid}
+        </g>`;
+    },
+
+    raptor(p, w) {
+      const leg = (c) => `<path d="M126 124 Q104 160 124 186 L108 196 L148 198 Q146 188 140 182 Q148 156 154 128 Z" fill="${c}"/><path d="M108 196 q-4 -6 2 -9" stroke="#fff3d6" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+      return `
+        <g class="rig-tail"><path d="M100 108 Q44 92 4 124 Q50 114 102 130 Z" fill="${p.body}"/>
+          <path d="M46 104 l6 12 M68 102 l5 14 M26 112 l7 10" stroke="${p.dark}" stroke-width="4" stroke-linecap="round"/>${w.tail}</g>
+        <g transform="translate(-6,0)"><g class="rig-leg a">${leg(p.dark)}</g></g>
+        <g class="rig-body">
+          ${w.back0}
+          <ellipse cx="148" cy="112" rx="54" ry="32" fill="${p.body}"/>
+          <ellipse cx="156" cy="126" rx="38" ry="18" fill="${p.belly}"/>
+          <path d="M112 90 q10 -8 20 0 M138 84 q10 -8 20 0 M164 90 q10 -8 20 0" stroke="${p.dark}" stroke-width="4" fill="none" stroke-linecap="round" opacity=".7"/>
+          ${w.clothes}${w.back1}${w.neck}
+        </g>
+        <g transform="translate(20,0)"><g class="rig-leg b">${leg(p.body)}</g></g>
+        <path d="M188 116 q14 2 20 14 M196 110 q12 0 18 10" stroke="${p.dark}" stroke-width="6" fill="none" stroke-linecap="round"/>
+        <g class="rig-head">
+          <path d="M182 100 Q206 90 214 62 L242 66 Q236 100 206 126 Z" fill="${p.body}"/>
+          <path d="M212 52 Q248 38 288 58 Q294 72 278 78 L224 82 Q202 72 212 52 Z" fill="${p.body}"/>
+          <path d="M224 80 L278 78 Q276 90 262 90 L228 90 Z" fill="${p.dark}"/>
+          <path d="M234 80 l4 8 l4 -8 M250 79 l4 8 l4 -8" fill="#fff" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M214 54 l-14 -14 l10 2 l-4 -14 l14 14 z" fill="${p.dark}"/>
+          ${eye(240, 58, 6)}
+          ${w.hat}${w.face}${w.lid}
+        </g>`;
+    },
+
+    spino(p, w) {
+      const leg = (c) => `<path d="M112 138 Q100 176 112 196 L148 200 Q150 190 134 186 Q138 164 146 138 Z" fill="${c}"/>`;
+      return `
+        <g class="rig-tail"><path d="M90 108 Q44 110 6 150 Q52 148 100 140 Z" fill="${p.body}"/>${w.tail}</g>
+        <g transform="translate(-8,0)"><g class="rig-leg a">${leg(p.dark)}</g></g>
+        <g class="rig-body">
+          ${w.back0}
+          <path d="M94 112 Q96 34 144 24 Q192 36 198 112 Z" fill="${p.dark}"/>
+          <path d="M118 108 L116 52 M144 108 L144 36 M170 108 L172 52" stroke="${p.body}" stroke-width="3" opacity=".65" stroke-linecap="round"/>
+          <ellipse cx="146" cy="124" rx="60" ry="38" fill="${p.body}"/>
+          <ellipse cx="154" cy="142" rx="40" ry="22" fill="${p.belly}"/>
+          ${spots(p, [[118, 108, 6], [100, 130, 5]])}
+          ${w.clothes}${w.back1}${w.neck}
+        </g>
+        <g transform="translate(26,0)"><g class="rig-leg b">${leg(p.body)}</g></g>
+        <g class="rig-head">
+          <path d="M176 110 Q202 96 214 76 L238 96 L224 126 Z" fill="${p.body}"/>
+          <path d="M204 66 Q248 52 296 82 Q302 94 290 98 L228 100 Q196 90 204 66 Z" fill="${p.body}"/>
+          <path d="M226 98 L288 96 Q286 110 268 110 L232 108 Z" fill="${p.dark}"/>
+          <path d="M240 98 l4 7 l4 -7 M258 97 l4 7 l4 -7" fill="#fff" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M214 62 Q226 44 244 58 Z" fill="${p.dark}"/>
+          ${eye(234, 76, 6)}
+          ${w.hat}${w.face}${w.lid}
+        </g>`;
+    },
+
+    para(p, w) {
+      const leg = (c) => `<path d="M112 138 Q100 176 112 196 L148 200 Q150 190 134 186 Q138 164 146 138 Z" fill="${c}"/>`;
+      return `
+        <g class="rig-tail"><path d="M96 112 Q46 112 6 152 Q54 148 104 140 Z" fill="${p.body}"/>${w.tail}</g>
+        <g transform="translate(-8,0)"><g class="rig-leg a">${leg(p.dark)}</g></g>
+        <g class="rig-body">
+          ${w.back0}
+          <ellipse cx="150" cy="124" rx="62" ry="40" fill="${p.body}"/>
+          <ellipse cx="158" cy="140" rx="42" ry="22" fill="${p.belly}"/>
+          ${spots(p, [[124, 104, 6], [150, 98, 5], [104, 126, 5]])}
+          ${w.clothes}${w.back1}${w.neck}
+        </g>
+        <g transform="translate(26,0)"><g class="rig-leg b">${leg(p.body)}</g></g>
+        <g class="rig-head">
+          <path d="M180 108 Q204 90 210 64 L238 70 Q232 106 204 134 Z" fill="${p.body}"/>
+          <path d="M212 50 Q196 26 150 18 Q122 18 116 36 Q124 32 148 34 Q184 40 206 68 Z" fill="${p.dark}"/>
+          <path d="M140 28 Q176 32 200 56 M130 34 Q170 40 194 66" stroke="${p.body}" stroke-width="2.5" fill="none" opacity=".7"/>
+          <path d="M206 52 Q238 40 270 58 Q282 66 276 78 Q262 84 240 82 Q208 80 206 52 Z" fill="${p.body}"/>
+          <path d="M252 62 Q276 62 278 74 Q268 84 254 80 Z" fill="${p.belly}"/>
+          ${eye(232, 62, 6)}
+          ${w.hat}${w.face}${w.lid}
+        </g>`;
+    },
+
+    plesio(p, w) {
+      return `
+        <g class="rig-float">
+          <g class="rig-tail"><path d="M92 158 Q50 146 14 168 Q52 178 96 172 Z" fill="${p.body}"/>${w.tail}</g>
+          <g class="rig-leg a"><path d="M122 176 Q100 206 68 200 Q92 186 110 168 Z" fill="${p.dark}"/></g>
+          <g class="rig-body">
+            ${w.back0}
+            <ellipse cx="146" cy="158" rx="60" ry="30" fill="${p.body}"/>
+            <ellipse cx="152" cy="170" rx="40" ry="14" fill="${p.belly}"/>
+            ${spots(p, [[118, 146, 6], [146, 140, 5], [172, 148, 6]])}
+            ${w.clothes}${w.back1}${w.neck}
+          </g>
+          <g class="rig-leg b"><path d="M170 178 Q158 210 126 210 Q148 192 156 170 Z" fill="${p.dark}"/></g>
+          <g class="rig-head">
+            <path d="M176 144 C212 136 198 84 206 58 L234 60 C226 94 240 134 202 176 Z" fill="${p.body}"/>
+            <ellipse cx="228" cy="50" rx="26" ry="15" fill="${p.body}"/>
+            <path d="M242 44 Q272 44 276 56 Q266 66 244 60 Z" fill="${p.body}"/>
+            <path d="M248 58 q10 4 22 -1" stroke="${p.dark}" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            ${eye(236, 44, 5)}
+            ${w.hat}${w.face}${w.lid}
+          </g>
+        </g>
+        <g class="rig-water">
+          <ellipse cx="150" cy="188" rx="130" ry="20" fill="#4fb3e8" opacity=".6"/>
+          <path d="M40 186 q14 -8 28 0 M110 194 q14 -8 28 0 M190 186 q14 -8 28 0 M236 196 q12 -6 24 0" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" opacity=".7"/>
         </g>`;
     },
   };
@@ -167,15 +378,21 @@
     `<path class="sparkle" style="animation-delay:${i * 0.45}s" d="M${x} ${y - 9} L${x + 3} ${y - 3} L${x + 9} ${y} L${x + 3} ${y + 3} L${x} ${y + 9} L${x - 3} ${y + 3} L${x - 9} ${y} L${x - 3} ${y - 3} Z" fill="#fff6a8" stroke="#ffd23f" stroke-width="1"/>`
   ).join('');
 
+  function lid(species, p) {
+    const [x, y, r] = EYE_AT[species];
+    return `<g class="rig-lid"><circle cx="${x + 1}" cy="${y}" r="${r + 1.5}" fill="${p.body}"/><path d="M${x - r} ${y + 1} Q${x + 1} ${y + r * 0.9} ${x + r + 2} ${y + 1}" stroke="#222" stroke-width="2" fill="none" stroke-linecap="round"/></g>`;
+  }
+
   /**
-   * @param {string} species trex|brachio|trike|ptero
-   * @param {{tint?:number,legendary?:boolean,horns?:number,eggs?:number}} opts
+   * @param {string} species trex|brachio|trike|ptero|stego|anky|raptor|para|spino|plesio
+   * @param {{tint?:number,legendary?:boolean,horns?:number,eggs?:number,outfit?:object}} opts
    */
   function dino(species, opts) {
-    const o = Object.assign({ tint: 0, legendary: false, horns: 0, eggs: 0 }, opts);
+    const o = Object.assign({ tint: 0, legendary: false, horns: 0, eggs: 0, outfit: null }, opts);
     const p = o.legendary ? LEGEND_PALETTE[species] : TINTS[o.tint % TINTS.length];
+    const w = Object.assign({}, EMPTY_WEAR, global.Wardrobe ? global.Wardrobe.wear(species, o.outfit) : null, { lid: lid(species, p) });
     return `<svg class="dino-svg sp-${species}${o.legendary ? ' legendary' : ''}" viewBox="0 0 300 220" role="img" aria-label="${SPECIES[species].short}">
-      <g class="rig-root">${BUILDERS[species](p)}${horns(species, o.horns, p)}</g>
+      <g class="rig-root">${BUILDERS[species](p, w)}${horns(species, o.horns, p)}</g>
       ${eggs(o.eggs)}${o.legendary ? SPARKLES : ''}
     </svg>`;
   }

@@ -32,6 +32,7 @@
         <div class="dino-box" id="lab-dino"></div>
         <div class="dino-label"><b id="lab-name"></b>
           <button class="btn small" id="btn-mutate"></button>
+          <button class="btn small alt" id="btn-dress">👗 הַלְבָּשָׁה</button>
         </div>
       </div>
       <div class="card">
@@ -94,6 +95,23 @@
       </div>
     </section>
 
+    <!-- World: the whole herd living together -->
+    <section class="screen" id="screen-world" hidden>
+      <div class="card world-card">
+        <div class="world-head"><h2>🌍 עוֹלַם הַדִּינוֹזָאוּרִים</h2><span id="world-count" class="muted"></span></div>
+        <div class="world" id="world" dir="ltr">
+          <div class="w-sky"><span class="w-sun"></span><span class="w-cloud c1">☁️</span><span class="w-cloud c2">☁️</span><span class="w-stars">✨</span></div>
+          <div class="w-hills"></div>
+          <div class="w-ground"></div>
+          <div class="w-pond"></div>
+          <div class="w-props" id="world-props"></div>
+          <div class="w-herd" id="world-herd"></div>
+        </div>
+        <p class="muted">לוֹחֲצִים עַל דִּינוֹזָאוּר כְּדֵי לְטַפֵּל בּוֹ: לְהַאֲכִיל, לְשַׂחֵק, לְהַשְׁכִּיב לִישֹׁן וְלְהַלְבִּישׁ! 💕</p>
+      </div>
+      <div class="card pet-card" id="pet-panel" hidden></div>
+    </section>
+
     <!-- Sanctuary -->
     <section class="screen" id="screen-zoo" hidden>
       <div class="card">
@@ -115,6 +133,7 @@
     <button data-tab="lab" class="on"><span>🧪</span>מַעְבָּדָה</button>
     <button data-tab="read"><span>📖</span>קְרִיאָה</button>
     <button data-tab="trail"><span>🏞️</span>מַסָּע</button>
+    <button data-tab="world"><span>🌍</span>הָעוֹלָם</button>
     <button data-tab="zoo"><span>🦖</span>הַגַּן שֶׁלִּי</button>
   </nav>
 
@@ -122,10 +141,12 @@
   <div class="toast" id="toast" hidden></div>
 
   <script src="js/renderer.js"></script>
+  <script src="js/wardrobe.js"></script>
   <script src="js/manipulatives.js"></script>
   <script src="js/puzzles.js"></script>
   <script src="js/reading.js"></script>
   <script src="js/expedition.js"></script>
+  <script src="js/world.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
