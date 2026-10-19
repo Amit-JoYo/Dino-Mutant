@@ -4,7 +4,7 @@ A free, offline-first Hebrew learning game for early 2nd graders. Instead of tim
 
 **Play:** https://amit-joyo.github.io/Dino-Mutant/
 
-No ads, no purchases, no accounts. All progress stays on the device (`localStorage`).
+No ads, no purchases, no accounts. Progress stays on the device (`localStorage`). The only optional exception is class sharing, which a parent has to turn on and which shares just a first name and up to 3 chosen dinos (see below).
 
 ## Features
 
@@ -26,7 +26,19 @@ It is plain HTML, CSS and JavaScript with no build step. Serve the folder with a
 npx http-server -p 8080
 ```
 
-Then open http://localhost:8080. The service worker only registers over http(s), not `file://`.
+Then open http://localhost:8080. The service worker only registers over http(s), not `file://`. Class sharing and `admin.html` also need http(s).
+
+## Class sharing setup (optional)
+
+Class sharing is off until a Firebase config is present in `js/firebase-config.js`. Everything else works without it. To set it up on your own Firebase project (free Spark plan):
+
+1. Create a Firebase project, enable **Anonymous** and **Google** sign-in, and create a Firestore database.
+2. Add your site's domain under Authentication → Settings → Authorized domains. If you restrict the API key, allow `https://<your-project>.firebaseapp.com/*` as well as your site.
+3. Paste the web app config into `js/firebase-config.js` and bump `CACHE` in `sw.js`.
+4. Publish `firestore.rules` (Firestore → Rules).
+5. Open `admin.html`, sign in with Google, copy the uid it shows and create a document `admins/<uid>` in Firestore. Then create a class and post its code to parents.
+
+If a phone cannot connect, open `diag.html` and run the step-by-step test. Full design and limits are in `plan.md` section 8.
 
 ## Adding stories
 
@@ -40,7 +52,15 @@ Add entries to `stories.json`. Each needs an `id`, a `title`, and either `text` 
 | `js/app.js` | State, tabs, lab, park, parent menu |
 | `js/renderer.js` | SVG dino rigs (10 species) and animations |
 | `js/wardrobe.js` | Dress-up items and where they attach to each species |
-| `js/world.js` | The world scene and pet care |
+| `js/world.js` | The world scene, pet care and the class view |
+| `js/share.js` | WhatsApp picture cards (canvas to PNG) |
+| `js/cloud.js` | Class sharing: join, sync, classmates, reactions, gifts |
+| `js/social.js` | Reaction and gift screens |
+| `js/fsrest.js` | Small Firestore client over HTTPS |
+| `js/firebase-config.js` | Firebase web config (not secret; empty = sharing off) |
+| `admin.html`, `js/admin.js` | Owner-only class admin page |
+| `diag.html`, `js/diag.js` | Connection self-test |
+| `firestore.rules` | Security rules to publish in the Firebase console |
 | `js/puzzles.js`, `js/manipulatives.js` | Math and word puzzles, egg counting board |
 | `js/reading.js` | Karaoke reader and rewards |
 | `js/expedition.js` | Trail mode |
