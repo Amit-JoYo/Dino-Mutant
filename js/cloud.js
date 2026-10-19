@@ -37,6 +37,7 @@
         if (!global.firebase.apps.length) global.firebase.initializeApp(global.FIREBASE_CONFIG);
         auth = global.firebase.auth();
         db = global.firebase.firestore();
+        db.settings({ experimentalForceLongPolling: true });
         await auth.signInAnonymously();
       })().catch((e) => {
         booting = null;
@@ -303,7 +304,11 @@
       case 'not-configured': return 'הַשִּׁתּוּף בַּכִּתָּה עֲדַיִן לֹא פָּעִיל';
       case 'permission-denied': return 'אֵין הַרְשָׁאָה. אוּלַי הַשֵּׁם נָעוּל אוֹ שֶׁהַכִּתָּה כְּבָר לֹא פְּעִילָה';
       case 'gift-limit': return 'אֶפְשָׁר לִשְׁלֹחַ מַתָּנָה אַחַת בְּיוֹם. נִסּוּ מָחָר 🎁';
-      default: return 'אֵין חִבּוּר לָאִינְטֶרְנֶט. נַסּוּ שׁוּב';
+      default: {
+        if (e) console.warn('cloud error', e);
+        const code = e && (e.code || e.message);
+        return `אֵין חִבּוּר לָאִינְטֶרְנֶט. נַסּוּ שׁוּב${code ? ` (${String(code).slice(0, 40)})` : ''}`;
+      }
     }
   }
 

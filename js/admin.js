@@ -115,11 +115,11 @@
     try {
       const snap = await Promise.race([
         db.doc(`admins/${user.uid}`).get(),
-        new Promise((_, rej) => setTimeout(() => rej({ code: 'timeout' }), 12000)),
+        new Promise((_, rej) => setTimeout(() => rej({ code: 'timeout' }), 25000)),
       ]);
       isAdmin = snap.exists;
     } catch (e) {
-      checkError = `\nשגיאת בדיקה: ${e.code || e.message}`;
+      checkError = `\nשגיאת בדיקה: ${e.code || e.message}` + (e.code === 'timeout' ? '\nאין תשובה מ-Firestore. נסו חלון פרטי, כבו תוספי חסימת פרסומות, או רשת אחרת (למשל נתונים סלולריים).' : '');
     }
     if (!isAdmin) {
       status.textContent = `מחובר: ${user.email || ''}\nuid: ${user.uid}\nהחשבון עדיין לא מוגדר כמנהל: יש ליצור ב-Firestore, באוסף admins, מסמך שה-ID שלו הוא ה-uid הזה בדיוק.${checkError}`;
@@ -145,7 +145,23 @@
     const app = firebase.initializeApp(window.FIREBASE_CONFIG, 'admin');
     auth = app.auth();
     db = app.firestore();
-    $('btn-in').onclick = () => auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch((e) => { $('status').textContent = e.message; });
+    // Some networks and extensions break Firestore's default streaming connection; long polling still works.
+    db.settings({ experimentalForceLongPolling: true });
+    let signingIn = false;
+    $('btn-in').onclick = async () => {
+      if (signingIn) return;
+      signingIn = true;
+      $('btn-in').disabled = true;
+      try {
+        await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+      } catch (e) {
+        const closed = e.code === 'auth/cancelled-popup-request' || e.code === 'auth/popup-closed-by-user';
+        $('status').textContent = closed ? 'חלון ההתחברות נסגר. לחצו שוב ובחרו חשבון (פעם אחת בלבד, והמתינו לחלון).' : e.message;
+      } finally {
+        signingIn = false;
+        $('btn-in').disabled = false;
+      }
+    };
     $('btn-out').onclick = () => auth.signOut();
     $('btn-create').onclick = async () => {
       const name = $('new-name').value.trim().slice(0, 40);
