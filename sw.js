@@ -1,4 +1,4 @@
-const CACHE = 'dino-mutant-v15';
+const CACHE = 'dino-mutant-v16';
 const ASSETS = [
   './',
   './index.html',
@@ -52,7 +52,7 @@ function networkFirst(request) {
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
   const path = new URL(e.request.url).pathname;
-  if (path.endsWith('/admin.html') || path.endsWith('/admin.js')) return;
+  if (path.endsWith('/admin.html') || path.endsWith('/admin.js') || path.endsWith('/diag.html') || path.endsWith('/diag.js')) return;
   if (path.endsWith('/stories.json')) {
     e.respondWith(networkFirst(e.request));
     return;
