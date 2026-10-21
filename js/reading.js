@@ -151,6 +151,44 @@
     return st.progress[id];
   }
 
+  // Local calendar day, so "once a day" follows the family's clock rather than UTC.
+  function todayKey() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+
+  let rereadDna = 0;
+
+  /* Re-reading a finished story: +1 DNA per paragraph and, at the end, +10 DNA and an egg for one of her dinos
+     (the story's own dino first). Once per story per day. */
+  function rereadBonus(pr, lastPar) {
+    const App = global.App;
+    const day = todayKey();
+    const out = { open: pr.bonusDay !== day, dna: 0, finished: false, egg: null };
+    if (!out.open) return out;
+    if (pr.rrDay !== day) {
+      pr.rrDay = day;
+      pr.rrN = 0;
+    }
+    if (pr.rrN < paragraphs.length) {
+      pr.rrN++;
+      out.dna += 1;
+    }
+    if (lastPar) {
+      pr.bonusDay = day;
+      pr.reads = (pr.reads || 0) + 1;
+      out.finished = true;
+      out.dna += 10;
+      const target = global.Nursery.pickTarget(story.legend);
+      if (target && global.Nursery.addEgg(target)) out.egg = target;
+    }
+    if (out.dna) {
+      App.addDna(out.dna);
+      rereadDna += out.dna;
+    }
+    return out;
+  }
+
   function renderLibrary() {
     const stories = global.App.allStories();
     $('read-reader').hidden = true;
@@ -165,10 +203,19 @@
       .map((s) => {
         const pr = progressOf(s.id);
         const total = parse(s.text).length;
-        const status = pr.done ? '⭐ הוּשְׁלַם' : pr.par > 0 ? `פִּסְקָה ${pr.par + 1} מִתּוֹךְ ${total}` : `${total} פִּסְקָאוֹת`;
+        const status = pr.done
+          ? `⭐ הוּשְׁלַם${pr.bonusDay !== todayKey() ? ' · 🥚 בּוֹנוּס' : ''}`
+          : pr.par > 0 ? `פִּסְקָה ${pr.par + 1} מִתּוֹךְ ${total}` : `${total} פִּסְקָאוֹת`;
+        const R = global.Renderer;
+        let prize = '';
+        if (s.legend && R.SPECIES[s.legend]) {
+          const got = global.App.state.dinos.some((d) => d.legendary && d.species === s.legend);
+          prize = `<span class="story-prize${got ? ' got' : ''}" title="${esc(R.SPECIES[s.legend].legendName)}">${got ? R.dino(s.legend, { legendary: true }) : R.silhouette(s.legend)}</span>`;
+        }
         return `<button class="story-card${pr.done ? ' done' : ''}" data-id="${esc(s.id)}">
           <span class="story-ico">${pr.done ? '🏆' : '📖'}</span>
           <span class="story-meta"><b>${esc(s.title)}</b><small>${status}</small></span>
+          ${prize}
         </button>`;
       })
       .join('');
@@ -180,6 +227,7 @@
     const pars = parse(s.text);
     if (!pars.length) return global.App.toast('הַסִּפּוּר רֵיק');
     story = s;
+    rereadDna = 0;
     paragraphs = pars;
     const pr = progressOf(id);
     parIdx = pr.done || pr.par >= paragraphs.length ? 0 : pr.par;
@@ -187,6 +235,9 @@
     $('read-reader').hidden = false;
     $('reader-title').textContent = s.title;
     showParagraph();
+    if (pr.done && pr.bonusDay !== todayKey()) {
+      global.App.toast('קְרִיאָה חוֹזֶרֶת: +1 דנ״א לְכָל פִּסְקָה, וּבַסּוֹף +10 וּבֵיצָה לְדִינוֹ 🥚');
+    }
   }
 
   function showParagraph() {
@@ -227,36 +278,65 @@
   function finishParagraph() {
     const App = global.App;
     const pr = progressOf(story.id);
+    const rereading = pr.done;
     const lastPar = parIdx === paragraphs.length - 1;
     const first = !pr.done && parIdx >= pr.rewarded;
     const dnaGain = first ? 10 : 0;
     let update = null;
+    let reread = null;
 
     if (first) {
       pr.rewarded = parIdx + 1;
       update = App.applyReadingUpdate();
       App.addDna(dnaGain);
     }
+    if (rereading) reread = rereadBonus(pr, lastPar);
     pr.par = lastPar ? 0 : parIdx + 1;
 
     let legendary = null;
     let bonus = 0;
     if (lastPar && !pr.done) {
       pr.done = true;
-      const res = App.unlockLegendary();
+      const res = App.unlockLegendary(story.legend);
       legendary = res.dino;
       bonus = res.bonusDna;
     }
     App.save();
     App.refreshHud();
 
-    if (lastPar) {
+    if (lastPar && reread) {
+      const prize = reread.egg || App.state.dinos.find((d) => d.legendary && d.species === story.legend) || App.activeDino();
+      const onClose = () => {
+        story = null;
+        renderLibrary();
+      };
+      if (reread.finished) {
+        App.celebrate({
+          title: 'קָרָאתְּ שׁוּב! 🥚',
+          lines: [
+            `+${rereadDna} נְקֻדּוֹת דנ״א`,
+            reread.egg
+              ? `בֵּיצָה חֲדָשָׁה אֵצֶל ${esc(App.dinoName(reread.egg))}! הִיא תִּבְקַע בְּעוֹד שָׁעָה 🐣`
+              : 'לְכׇל הַדִּינוֹזָאוּרִים כְּבָר יֵשׁ שָׁלוֹשׁ בֵּיצִים אוֹ תִּינוֹקוֹת! 🐣',
+          ],
+          dinoHtml: App.dinoHtml(prize),
+          onClose,
+        });
+      } else {
+        App.celebrate({
+          title: 'סִיַּמְתְּ שׁוּב! 🏆',
+          lines: ['כְּבָר קִבַּלְתְּ אֶת בּוֹנוּס הַקְּרִיאָה שֶׁל הַיּוֹם. מָחָר אֶפְשָׁר לְקַבֵּל בֵּיצָה נוֹסֶפֶת! 🌅'],
+          dinoHtml: App.dinoHtml(prize),
+          onClose,
+        });
+      }
+    } else if (lastPar) {
       const lines = [];
       if (dnaGain) lines.push(`+${dnaGain} נְקֻדּוֹת דנ״א`);
       if (update) lines.push(update.text);
       if (legendary) lines.push(`בַּגַּן שֶׁלָּךְ מְחַכֶּה: ${global.Renderer.SPECIES[legendary.species].legendName}`);
       else if (bonus) lines.push(`כָּל הָאַגָּדִיִּים כְּבָר אֶצְלֵךְ! בּוֹנוּס: +${bonus} דנ״א`);
-      else lines.push('כְּבָר קָרָאת אֶת הַסִּפּוּר הַזֶּה. כׇּל הַכָּבוֹד עַל הַתִּרְגּוּל!');
+      else lines.push('סִיַּמְתְּ אֶת הַסִּפּוּר!');
       App.celebrate({
         title: legendary ? 'דִּינוֹזָאוּר אַגָּדִי נִפְתַּח! 🌟' : 'סִיַּמְתְּ אֶת כׇּל הַסִּפּוּר! 🏆',
         lines,

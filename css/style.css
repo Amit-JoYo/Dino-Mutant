@@ -99,6 +99,10 @@ main { max-width: 720px; margin: 0 auto; padding: 12px; }
 .story-ico { font-size: 2rem; }
 .story-meta b { display: block; font-size: 1.2rem; }
 .story-meta small { color: var(--muted); }
+.story-meta { flex: 1; min-width: 0; }
+.story-prize { flex: 0 0 74px; width: 74px; }
+.story-prize .dino-svg * { animation: none !important; }
+.story-prize:not(.got) .silhouette { filter: brightness(0) opacity(.22); }
 .reader-head { display: flex; align-items: center; gap: 10px; }
 .reader-head h2 { flex: 1; margin: 0; }
 .progress { height: 10px; background: #dcebe1; border-radius: 99px; margin: 10px 0; overflow: hidden; }
@@ -229,6 +233,13 @@ main { max-width: 720px; margin: 0 auto; padding: 12px; }
 .rig-egg { transform-origin: 50% 100%; animation: wobble 2.2s ease-in-out infinite; }
 .sparkle { transform-origin: 50% 50%; animation: twinkle 1.6s ease-in-out infinite; }
 .legendary { filter: drop-shadow(0 0 10px rgba(255, 214, 64, .9)); }
+.evolved { filter: drop-shadow(0 0 10px rgba(255, 126, 182, .85)) drop-shadow(0 0 20px rgba(255, 224, 102, .8)); }
+.evolved.legendary { filter: drop-shadow(0 0 12px rgba(255, 126, 182, .9)) drop-shadow(0 0 24px rgba(255, 214, 64, .95)); }
+.evo-aura { transform-origin: 50% 50%; animation: evoPulse 2.6s ease-in-out infinite, evoHue 8s linear infinite; }
+.evo-orbit { transform-origin: 50% 50%; animation: evoSpin 14s linear infinite; }
+@keyframes evoPulse { 50% { transform: scale(1.06); opacity: .8; } }
+@keyframes evoHue { to { filter: hue-rotate(360deg); } }
+@keyframes evoSpin { to { transform: rotate(360deg); } }
 @keyframes breathe { 50% { transform: scale(1.015, 1.03); } }
 @keyframes wag { 0%, 100% { transform: rotate(-5deg); } 50% { transform: rotate(7deg); } }
 @keyframes nod { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(3deg); } }
@@ -360,6 +371,21 @@ a.btn { display: inline-flex; align-items: center; justify-content: center; text
 .world-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0 8px; }
 .w-name { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 2px; background: rgba(255, 255, 255, .88); color: var(--ink); font-weight: 700; font-size: calc(var(--u, 3px) * 4.6); line-height: 1.3; padding: 0 calc(var(--u, 3px) * 2); border-radius: 99px; white-space: nowrap; pointer-events: none; box-shadow: 0 1px 3px rgba(0,0,0,.2); }
 .world.night .w-name { background: rgba(255, 255, 255, .75); }
+
+/* ---------- nursery: eggs and baby dinos ---------- */
+.nursery { background: rgba(255, 255, 255, .92); border-radius: 16px; padding: 8px 10px 10px; margin: 8px 6px 0; text-align: center; }
+.nursery-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.nursery-head small { color: var(--muted); }
+.nslots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 6px 0; }
+.nslot { font: inherit; border: 3px dashed #cfe3d6; background: #f4fbf6; border-radius: 14px; padding: 6px 4px; min-height: 100px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+.nslot.egg { border-style: solid; background: #fff6e0; border-color: #ecd9a5; }
+.nslot.baby { border-style: solid; border-color: var(--gold); background: #fffaf0; cursor: pointer; }
+.nslot.baby:active { transform: scale(.97); }
+.nslot small { font-size: .72rem; line-height: 1.2; }
+.nslot .mini { width: 100%; }
+.nslot-ico { font-size: 1.8rem; opacity: .4; }
+.egg-svg { width: 38px; height: 50px; }
+.egg-svg * { transform-box: fill-box; }
 
 /* ---------- wardrobe modal ---------- */
 .wd-top { position: sticky; top: -20px; z-index: 3; background: #fff; padding: 4px 0 6px; margin-top: -4px; }

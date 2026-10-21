@@ -1,4 +1,4 @@
-const CACHE = 'dino-mutant-v18';
+const CACHE = 'dino-mutant-v21';
 const ASSETS = [
   './',
   './index.html',
@@ -8,6 +8,7 @@ const ASSETS = [
   './js/app.js',
   './js/renderer.js',
   './js/wardrobe.js',
+  './js/nursery.js',
   './js/world.js',
   './js/firebase-config.js',
   './js/fsrest.js',

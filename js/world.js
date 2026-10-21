@@ -35,8 +35,9 @@
   const FAVORITE = {
     trex: 'meat', raptor: 'meat', spino: 'fish', plesio: 'fish', ptero: 'fish',
     brachio: 'leaf', trike: 'apple', stego: 'leaf', anky: 'berry', para: 'apple',
+    compy: 'meat', igua: 'apple', diplo: 'leaf', dilo: 'meat', pachy: 'berry',
   };
-  const SIZE = { brachio: 1.2, stego: 1.05, spino: 1.1, raptor: 0.9 };
+  const SIZE = { brachio: 1.2, stego: 1.05, spino: 1.1, raptor: 0.9, diplo: 1.2, compy: 0.75, igua: 1.05, pachy: 0.95 };
 
   const POND = { x0: 63, x1: 87, y0: 66, y1: 71 }; // where swimmers stay (feet position, % of the stage)
   const FOOD_SPOTS = [{ x: 17, y: 79 }, { x: 36, y: 71 }];
@@ -175,7 +176,7 @@
 
   function widthFor(s, y) {
     const depth = clamp((y - 52) / 42, 0, 1);
-    return stageW() * 0.24 * (0.7 + 0.4 * depth) * (SIZE[s.d.species] || 1);
+    return stageW() * 0.24 * (0.7 + 0.4 * depth) * (SIZE[s.d.species] || 1) * (s.d.baby ? 0.5 : 1);
   }
 
   function landPoint() {
@@ -233,7 +234,7 @@
   }
 
   function updateBadge(s) {
-    if (s.d.visitor) return;
+    if (s.d.visitor || s.d.baby) return;
     const low = Pets.lowest(s.d);
     const b = s.el.querySelector('.w-badge');
     b.textContent = Pets.ensure(s.d)[low.key] < 30 ? low.icon : '';
@@ -372,6 +373,46 @@
     return 'wander';
   }
 
+  /* Babies stay close to their parent: wander around it, hop about, and curl up when the parent sleeps. */
+  function nearParent(par, s) {
+    if (isSwimmer(s)) return { x: clamp(par.x + rnd(-6, 6), POND.x0, POND.x1), y: clamp(par.y + rnd(-1, 2), POND.y0, POND.y1) };
+    const p = { x: clamp(par.x + rnd(-11, 11), 6, 94), y: clamp(par.y + rnd(-2, 5), 58, 94) };
+    if (p.x > 50 && p.y < 76) p.y = 78;
+    return p;
+  }
+
+  async function babyLife(s, my) {
+    await wait(rnd(300, 1500));
+    while (alive(my)) {
+      if (s.busy) {
+        await wait(400);
+        continue;
+      }
+      const par = state.sprites.get(String(s.d.parentUid));
+      if (!par) return;
+      try {
+        const r = Math.random();
+        if (par.state === 'sleeping' && !isSwimmer(s)) {
+          const p = nearParent(par, s);
+          await moveTo(s, p.x, p.y);
+          if (ok(s, my)) {
+            setState(s, 'sleeping', '💤');
+            await wait(rnd(3000, 5000));
+            if (alive(my) && !s.busy) setState(s, '', '');
+          }
+        } else if (r < 0.3) {
+          setState(s, 'playing', '');
+          await wait(rnd(1500, 2600));
+          if (alive(my) && !s.busy) setState(s, '', '');
+        } else {
+          const p = nearParent(par, s);
+          await moveTo(s, p.x, p.y);
+        }
+      } catch (e) { /* keep going */ }
+      if (alive(my) && !s.busy) await wait(rnd(500, 1600));
+    }
+  }
+
   async function life(s, my) {
     await wait(rnd(200, 2800));
     while (alive(my)) {
@@ -479,6 +520,11 @@
 
   function select(uid) {
     const s = state.sprites.get(uid);
+    if (s && s.d.baby) {
+      // Tapping a baby opens its own wardrobe.
+      openWardrobe(s.d.parentUid, null, () => refreshSprite(s), s.d.babyIdx);
+      return;
+    }
     if (!s) return;
     if (state.sel && state.sel !== s) release(state.sel);
     state.sel = s;
@@ -603,10 +649,14 @@
   }
 
   /* ------------------------------------------------------------------ wardrobe modal */
-  function openWardrobe(uid, slot, onDone) {
+  /* Dresses a dino, or one of its babies when babyIdx is given. */
+  function openWardrobe(uid, slot, onDone, babyIdx) {
     const App = global.App;
     const W = global.Wardrobe;
-    const d = App.state.dinos.find((x) => x.uid === uid);
+    const parent = App.state.dinos.find((x) => x.uid === uid);
+    if (!parent) return;
+    const isBaby = Number.isInteger(babyIdx);
+    const d = isBaby ? (parent.babies || [])[babyIdx] : parent;
     if (!d) return;
     if (!d.outfit) d.outfit = {};
     let cur = slot || 'hat';
@@ -617,8 +667,8 @@
       const none = !d.outfit[cur];
       $('modal-card').innerHTML = `
         <div class="wd-top">
-          <h2>👗 הַלְבָּשָׁה: ${esc(App.dinoName(d))}</h2>
-          <div class="wd-dino">${App.dinoHtml(d)}</div>
+          <h2>👗 הַלְבָּשָׁה: ${isBaby ? 'תִּינוֹק שֶׁל ' : ''}${esc(App.dinoName(parent))}</h2>
+          <div class="wd-dino">${isBaby ? global.Nursery.babyHtml(parent, d) : App.dinoHtml(d)}</div>
           <div class="wd-dna">🧬 <b>${App.state.dna}</b></div>
         </div>
         <div class="wd-tabs">${W.SLOTS.map((sl) => `<button class="wd-tab${sl.id === cur ? ' on' : ''}" data-slot="${sl.id}"><span>${sl.icon}</span>${sl.label}</button>`).join('')}</div>
@@ -679,6 +729,7 @@
 
   function periodic() {
     state.sprites.forEach((s) => {
+      if (s.d.baby) return;
       Pets.decay(s.d);
       updateBadge(s);
     });
@@ -789,8 +840,30 @@
       $('world-herd').appendChild(s.el);
       updateBadge(s);
     });
-    $('world-count').textContent = `${state.sprites.size} דִּינוֹזָאוּרִים בָּעוֹלָם`;
-    state.sprites.forEach((s) => life(s, my));
+    const parents = state.sprites.size;
+    let babyCount = 0;
+    App.state.dinos.forEach((d) => {
+      (d.babies || []).forEach((b, i) => {
+        if (!b.hatched) return;
+        const par = state.sprites.get(String(d.uid));
+        const bd = { uid: `b${d.uid}-${i}`, species: d.species, tint: global.Nursery.babyTint(d), legendary: d.legendary, outfit: b.outfit, baby: true, parentUid: d.uid, babyIdx: i };
+        const s = makeSprite(bd);
+        const p = nearParent(par, s);
+        s.x = p.x;
+        s.y = p.y;
+        s.el.style.left = `${p.x}%`;
+        s.el.style.top = `${p.y}%`;
+        s.el.style.width = `${widthFor(s, p.y)}px`;
+        s.el.style.zIndex = Math.round(p.y * 10);
+        state.sprites.set(String(bd.uid), s);
+        $('world-herd').appendChild(s.el);
+        babyCount++;
+      });
+    });
+    $('world-count').textContent = babyCount
+      ? `${parents} דִּינוֹזָאוּרִים וְ-${babyCount} תִּינוֹקוֹת בָּעוֹלָם`
+      : `${parents} דִּינוֹזָאוּרִים בָּעוֹלָם`;
+    state.sprites.forEach((s) => (s.d.baby ? babyLife(s, my) : life(s, my)));
   }
 
   function leave() {
@@ -819,5 +892,5 @@
     window.addEventListener('resize', layout);
   }
 
-  global.World = { init, enter, leave, openWardrobe, Pets, FOODS, setNight: (v) => { state.forceNight = v; if (state.on) $('world').classList.toggle('night', isNight()); } };
+  global.World = { init, enter, leave, openWardrobe, isOn: () => state.on, Pets, FOODS, setNight: (v) => { state.forceNight = v; if (state.on) $('world').classList.toggle('night', isNight()); } };
 })(window);

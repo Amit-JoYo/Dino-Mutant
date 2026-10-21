@@ -7,7 +7,7 @@
   const esc = (s) => global.Puzzles.escapeHtml(s);
   const R = () => global.Renderer;
 
-  const LEGEND_ORDER = ['trex', 'brachio', 'trike', 'ptero', 'stego', 'anky', 'raptor', 'para', 'spino', 'plesio'];
+  const LEGEND_ORDER = ['trex', 'brachio', 'trike', 'ptero', 'stego', 'anky', 'raptor', 'para', 'spino', 'plesio', 'compy', 'igua', 'diplo', 'dilo', 'pachy'];
   const MUTATE_COST = 10;
 
   function defaults() {
@@ -40,6 +40,7 @@
     if (!Array.isArray(s.dinos) || !s.dinos.length) s.dinos = defaults().dinos;
     if (!s.dinos.some((d) => d.uid === s.active)) s.active = s.dinos[0].uid;
     s.dinos = s.dinos.filter((d) => global.Renderer.SPECIES[d.species]);
+    global.Nursery.migrate(s);
     s.wardrobe = Array.from(new Set((Array.isArray(s.wardrobe) ? s.wardrobe : []).concat(global.Wardrobe.STARTERS)));
     s.cloud = Object.assign(defaults().cloud, s.cloud || {});
     if (!Array.isArray(s.cloud.showcase)) s.cloud.showcase = [];
@@ -56,6 +57,7 @@
         id: String(s.id),
         title: String(s.title),
         text: Array.isArray(s.paragraphs) ? s.paragraphs.join('\n') : String(s.text),
+        legend: LEGEND_ORDER.includes(s.legend) ? s.legend : '',
         shared: true,
       }));
   }
@@ -102,13 +104,14 @@
     },
 
     dinoHtml(d, extra) {
-      return R().dino(d.species, Object.assign({ tint: d.tint, legendary: d.legendary, horns: d.horns, eggs: d.eggs, outfit: d.outfit }, extra));
+      return R().dino(d.species, Object.assign({ tint: d.tint, legendary: d.legendary, horns: d.horns, eggs: global.Nursery.eggCount(d), outfit: d.outfit, evolved: d.evolved, baby: d.baby }, extra));
     },
 
     dinoName(d) {
       if (d.name) return d.name;
       const sp = R().SPECIES[d.species];
-      return d.legendary ? sp.legendName : sp.short;
+      const base = d.legendary ? sp.legendName : sp.short;
+      return d.evolved ? `מֵגָה ${base}` : base;
     },
 
     addDna(n) {
@@ -185,15 +188,16 @@
       let kind = ['horn', 'tint', 'egg'][st.updates % 3];
       st.updates++;
       if (kind === 'horn' && d.horns >= 3) kind = 'tint';
-      if (kind === 'egg' && d.eggs >= 3) kind = 'tint';
+      if (kind === 'egg' && !global.Nursery.hasRoom(d)) kind = 'tint';
       let text;
       if (kind === 'horn') {
         d.horns++;
         text = 'צָמְחָה לַדִּינוֹ קֶרֶן קְטַנָּה! 🦄';
       } else if (kind === 'egg') {
-        d.eggs++;
-        text = 'בֵּיצָה קְטַנָּה הִתְגַּלְּתָה לְיַד הַדִּינוֹ! 🥚';
+        global.Nursery.addEgg(d);
+        text = 'בֵּיצָה קְטַנָּה הִתְגַּלְּתָה לְיַד הַדִּינוֹ! הִיא תִּבְקַע בְּעוֹד שָׁעָה 🥚';
       } else {
+        d.prevTint = d.tint;
         d.tint = (d.tint + 1) % R().TINTS.length;
         text = 'צֶבַע הַדִּינוֹ הִשְׁתַּנָּה! 🎨';
       }
@@ -201,10 +205,11 @@
       return { text, dino: d };
     },
 
-    unlockLegendary() {
+    /* Finishing a story unlocks that story's own legendary dino. If she already has it (or the story has none), she gets the next one she is missing. */
+    unlockLegendary(preferred) {
       const st = App.state;
       const owned = new Set(st.dinos.filter((d) => d.legendary).map((d) => d.species));
-      const species = LEGEND_ORDER.find((s) => !owned.has(s));
+      const species = preferred && LEGEND_ORDER.includes(preferred) && !owned.has(preferred) ? preferred : LEGEND_ORDER.find((s) => !owned.has(s));
       if (!species) {
         App.addDna(50);
         return { dino: null, bonusDna: 50 };
@@ -233,8 +238,10 @@
     /* ---- lab ---- */
     renderLabDino() {
       const d = App.activeDino();
-      $('lab-dino').innerHTML = App.dinoHtml(d);
+      // The eggs are shown in the nursery strip below, so the dino itself is drawn without them here.
+      $('lab-dino').innerHTML = App.dinoHtml(d, { eggs: 0 });
       $('lab-name').textContent = App.dinoName(d);
+      global.Nursery.render($('lab-nursery'), d);
       const b = $('btn-mutate');
       b.disabled = d.legendary;
       b.textContent = d.legendary ? '✨ אַגָּדִי' : `🧬 מוּטַצְיָה (${MUTATE_COST} דנ״א)`;
@@ -270,6 +277,7 @@
       if (d.legendary) return;
       if (App.state.dna < MUTATE_COST) return App.toast(`צָרִיךְ עוֹד ${MUTATE_COST - App.state.dna} דנ״א. פִּתְרִי חִידוֹת! 🧩`);
       App.state.dna -= MUTATE_COST;
+      d.prevTint = d.tint;
       d.tint = (d.tint + 1) % R().TINTS.length;
       App.save();
       App.refreshHud();
@@ -486,6 +494,7 @@
       global.Expedition.init();
       global.World.init();
       global.Share.init();
+      global.Nursery.init();
       global.Cloud.autoSync();
       App.refreshHud();
       App.mountLabPuzzle();

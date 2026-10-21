@@ -7,7 +7,7 @@
   const cooldown = {};
   let offering = false;
 
-  const eligible = () => global.App.state.dinos.filter((d) => !d.legendary && d.species !== 'trex' && !d.gift);
+  const eligible = () => global.App.state.dinos.filter((d) => !d.legendary && d.species !== 'trex' && !d.gift && !d.evolved);
 
   async function react(visitor, kind, say) {
     const Cloud = global.Cloud;

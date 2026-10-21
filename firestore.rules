@@ -39,7 +39,7 @@ service cloud.firestore {
     function validGift() {
       let d = request.resource.data;
       return d.keys().hasOnly(['species', 'tint', 'at'])
-        && d.species in ['brachio', 'trike', 'ptero', 'stego', 'anky', 'raptor', 'para', 'spino', 'plesio']
+        && d.species in ['brachio', 'trike', 'ptero', 'stego', 'anky', 'raptor', 'para', 'spino', 'plesio', 'compy', 'igua', 'diplo', 'dilo', 'pachy']
         && d.tint is int && d.tint >= 0 && d.tint < 20
         && d.at == request.time;
     }

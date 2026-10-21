@@ -121,16 +121,16 @@
     const imgs = await Promise.all(species.map((sp) => {
       const mine = st.dinos.filter((d) => d.species === sp);
       const pick = mine.find((d) => d.legendary) || mine[0];
-      return pick ? dinoImage(pick, 190) : null;
+      return pick ? dinoImage(pick, 170) : null;
     }));
     species.forEach((sp, i) => {
       const x = gx + (i % cols) * cellW;
-      const y = 340 + Math.floor(i / cols) * 230;
+      const y = 330 + Math.floor(i / cols) * 205;
       ctx.fillStyle = 'rgba(255,255,255,.55)';
-      roundRect(ctx, x + 4, y, cellW - 8, 210, 24);
+      roundRect(ctx, x + 4, y, cellW - 8, 195, 24);
       ctx.fill();
-      if (imgs[i]) ctx.drawImage(imgs[i], x + 5, y + 20);
-      else text(ctx, '?', x + cellW / 2, y + 105, 90, 'rgba(35,50,58,.3)');
+      if (imgs[i]) ctx.drawImage(imgs[i], x + 15, y + 22);
+      else text(ctx, '?', x + cellW / 2, y + 98, 90, 'rgba(35,50,58,.3)');
     });
     return canvas;
   }

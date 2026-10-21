@@ -9,11 +9,11 @@ No ads, no purchases, no accounts. Progress stays on the device (`localStorage`)
 ## Features
 
 - **Lab (מַעְבָּדָה):** procedural 2nd-grade math puzzles with full nikud: bridging 10, tens and units, missing addend, word problems, and word practice. Includes a drag-and-drop egg counting board and text-to-speech (he-IL).
-- **Reading (קְרִיאָה):** karaoke-style reading, word by word, with a highlighted active word, per-word and per-paragraph read-aloud, and an optional microphone check. Each paragraph earns DNA and a small dino upgrade; finishing a story unlocks a legendary dino.
+- **Reading (קְרִיאָה):** karaoke-style reading, word by word, with a highlighted active word, per-word and per-paragraph read-aloud, and an optional microphone check. Each paragraph earns DNA and a small dino upgrade; finishing a story unlocks that story's own legendary dino (shown on its card). Reading a finished story again earns a small daily bonus and an egg; eggs hatch after an hour into baby dinos that can be dressed, and a dino whose 3 babies have all hatched evolves into a "מֵגָה" form.
 - **Trail (מַסָּע):** a side-scrolling expedition with 3 obstacles per trip. Clear each with the dino's special ability or by solving a puzzle.
 - **World (הָעוֹלָם):** the whole herd lives on one screen: wandering, eating, playing, sleeping, splashing and visiting each other, with day and night following the device clock. Tap a dino to feed, play, put to sleep, wash, hug, rename, or dress it. Needs decay slowly but never drop below a floor, so dinos get sad but never die.
 - **Dress-up:** 63 items in 6 slots (hats, clothes, glasses, neck, back, tail), bought with DNA.
-- **My Park (הַגַּן שֶׁלִּי):** 10 dino species, each with a legendary version, plus a shop for new ones.
+- **My Park (הַגַּן שֶׁלִּי):** 15 dino species, each with a legendary version, plus a shop for new ones.
 - **Picture cards:** share a dino card or a progress card to WhatsApp as an image.
 - **Parent mode (מַצַּב הוֹרִים):** behind a small multiplication gate. Paste, edit and delete stories from school, set custom practice words, or reset progress.
 - **Class sharing (optional, off by default):** with Firebase configured, a parent can enable it, join a class by code with the child's first name, choose up to 3 dinos to show, and delete all online data at any time. Classmates' dinos then visit in a "הַכִּתָּה" view of the World tab, where kids can send emoji reactions and gift a copy of a dino (one a day). Only a first name and the chosen dinos are shared: no chat, pictures or personal details. The owner manages classes and names from `admin.html`. See `plan.md` section 8 for setup.
@@ -42,7 +42,7 @@ If a phone cannot connect, open `diag.html` and run the step-by-step test. Full 
 
 ## Adding stories
 
-Add entries to `stories.json`. Each needs an `id`, a `title`, and either `text` (one paragraph per line) or a `paragraphs` array. Use full nikud. Stories are fetched network-first, so new ones appear without an app update.
+Add entries to `stories.json`. Each needs an `id`, a `title`, and either `text` (one paragraph per line) or a `paragraphs` array. Use full nikud. Each paragraph read earns DNA, so keep paragraphs to one or two sentences. Optional `legend` is the species id whose legendary dino the story unlocks: `trex`, `brachio`, `trike`, `ptero`, `stego`, `anky`, `raptor`, `para`, `spino`, `plesio`, `compy`, `igua`, `diplo`, `dilo` or `pachy`. Stories without it unlock the next missing legendary. Stories are fetched network-first, so new ones appear without an app update.
 
 ## Project layout
 
@@ -50,8 +50,9 @@ Add entries to `stories.json`. Each needs an `id`, a `title`, and either `text` 
 |---|---|
 | `index.html`, `css/style.css` | UI, RTL layout, animations |
 | `js/app.js` | State, tabs, lab, park, parent menu |
-| `js/renderer.js` | SVG dino rigs (10 species) and animations |
+| `js/renderer.js` | SVG dino rigs (15 species) and animations |
 | `js/wardrobe.js` | Dress-up items and where they attach to each species |
+| `js/nursery.js` | Eggs, hatching, baby dinos and the Mega evolution |
 | `js/world.js` | The world scene, pet care and the class view |
 | `js/share.js` | WhatsApp picture cards (canvas to PNG) |
 | `js/cloud.js` | Class sharing: join, sync, classmates, reactions, gifts |

@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-10-21: 11 new stories and 5 new dinos
+
+### Added
+- **Eggs and baby dinos:** every dino can have up to 3 eggs. Re-reading a finished story gives +1 DNA per paragraph and, at the end, +10 DNA and an egg (once per story per day) for the story's dino, or another dino with room if that one is full. The small eggs that reading already gave next to a dino are now real eggs too. An egg hatches after 1 hour (real time) into a baby of the same species, with big eyes, in its own eggshell. The baby looks like its parent's previous colour: every time the parent mutates, the babies take its old form. Babies show in the lab (a nursery strip with countdowns), wander next to their parent in the World, and can each be dressed separately. Old saves keep their eggs, which now hatch an hour after the update.
+- **Dino evolution:** when all 3 babies of a dino have hatched, it evolves into a "מֵגָה" form with a glowing aura and orbiting sparkles, plus +30 DNA. Evolved dinos are shown to classmates and on share cards, and can't be gifted.
+- **11 new stories** (family photo, desert floods, snow in the Galilee, alone in the rain, growing vegetables, class garden a/b, class guest a/b, nature photographer, the concert).
+- **5 new dinos:** Compsognathus, Iguanodon, Diplodocus, Dilophosaurus and Pachycephalosaurus, each with a legendary version, wardrobe positions and a favorite food. 15 species in total.
+- **Each story now has its own legendary dino** (`legend` in `stories.json`), shown on the story card as a silhouette until it is earned. If she already has it, finishing the story gives the next legendary she is missing.
+- The progress card now fits all 15 species.
+
+### Changed
+- `firestore.rules`: the gift whitelist includes the 5 new species. **Publish the rules again**, otherwise gifting a new species is denied.
+- Service worker cache bumped to `v21`.
+
 ## 2026-10-19 (evening): class sharing
 
 ### Fixed
