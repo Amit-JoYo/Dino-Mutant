@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-10-25: Dino Town, part 4: dinos in rooms
+
+### Added
+- **Put dinos in rooms.** Tap a room, then "➕ לְהַכְנִיס דִּינוֹזָאוּר" and pick one of her dinos. The list shows where each dino is now (outside, or which room) and blinks the need it is lowest on. A room fits as many dinos as its stars (1-3). A dino can move from room to room, and "🌳 הַחוּצָה" sends it back outside.
+- **They go inside for real:** on the map the dino (and its babies) walks to the building's door and goes in. Buildings show "🦖 2" for how many dinos are inside, and the counter above the map says how many are in buildings. Sending a dino out makes it come out of the door.
+- **Inside, dinos do the room's activity:** sleeping in the bedroom, eating in the dining room, splashing in the pool, cooking, playing, cuddling animals. Their hatched babies are with them.
+- **Rooms look after needs, even while the app is closed:** bedrooms refill energy, dining rooms food, bathrooms/pools cleanliness, play rooms fun, and the doctor's room a bit of everything. Working rooms (cooking, shops, the farm, the fire station and more) and learning rooms add fun and ❤️ hearts. Higher-star rooms work faster, and a dining room works 1.5× faster when a chef is in that building's kitchen. Other needs still go down, so it is worth moving dinos around.
+- The room card says what the room does and lists who is inside.
+
+### Changed
+- Service worker cache bumped to `v25`.
+
 ## 2026-10-25: Dino Town, part 3: inside the buildings
 
 ### Added

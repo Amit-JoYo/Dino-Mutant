@@ -69,9 +69,13 @@
       now = now || Date.now();
       const hours = Math.min(48, (now - p.t) / 3600000);
       if (hours > 0) {
+        // A dino in a town room gets that room's effect (e.g. a bedroom refills rest) instead of the normal drop.
+        const fx = global.Town && global.App && global.App.state && global.App.state.town ? global.Town.jobEffect(d) : null;
         Object.keys(DECAY_PER_HOUR).forEach((k) => {
-          p[k] = Math.max(STAT_FLOOR, p[k] - DECAY_PER_HOUR[k] * hours);
+          if (fx && fx.gain[k]) p[k] = Math.min(100, Math.max(STAT_FLOOR, p[k]) + fx.gain[k] * hours);
+          else p[k] = Math.max(STAT_FLOOR, p[k] - DECAY_PER_HOUR[k] * hours);
         });
+        if (fx && fx.love) p.love += fx.love * hours;
       }
       p.t = now;
       return p;
@@ -427,6 +431,7 @@
   async function babyLife(s, my) {
     await wait(rnd(300, 1500));
     while (alive(my)) {
+      if (state.sprites.get(String(s.d.uid)) !== s) return; // went into a building
       if (s.busy) {
         await wait(400);
         continue;
@@ -459,6 +464,7 @@
   async function life(s, my) {
     await wait(rnd(200, 2800));
     while (alive(my)) {
+      if (state.sprites.get(String(s.d.uid)) !== s) return; // went into a building
       if (s.busy) {
         await wait(400);
         continue;
@@ -811,6 +817,7 @@
     $('world-lots').innerHTML = T().mapHtml(fresh).lots;
     $('world-mini').innerHTML = T().miniHtml();
     updateMini();
+    updateCount();
     const lot = T().LOTS[fresh];
     if (!lot) return;
     const sc = $('world-scroll');
@@ -987,32 +994,89 @@
     }
     App.state.dinos.forEach((d) => {
       Pets.decay(d);
+      if (T().jobOf(d.uid)) return;
       const s = makeSprite(d);
       state.sprites.set(String(d.uid), s);
       $('world-herd').appendChild(s.el);
       updateBadge(s);
     });
-    const parents = state.sprites.size;
-    let babyCount = 0;
     App.state.dinos.forEach((d) => {
-      (d.babies || []).forEach((b, i) => {
-        if (!b.hatched) return;
-        const par = state.sprites.get(String(d.uid));
-        const bd = { uid: `b${d.uid}-${i}`, species: d.species, tint: global.Nursery.babyTint(d), legendary: d.legendary, outfit: b.outfit, baby: true, parentUid: d.uid, babyIdx: i };
-        const s = makeSprite(bd);
-        const p = nearParent(par, s);
-        s.x = p.x;
-        s.y = p.y;
-        place(s, p.x, p.y);
-        state.sprites.set(String(bd.uid), s);
-        $('world-herd').appendChild(s.el);
-        babyCount++;
-      });
+      const par = state.sprites.get(String(d.uid));
+      if (par) spawnBabies(d, par);
     });
-    $('world-count').textContent = babyCount
+    updateCount();
+    state.sprites.forEach((s) => (s.d.baby ? babyLife(s, my) : life(s, my)));
+  }
+
+  function updateCount() {
+    if (state.mode !== 'mine') return;
+    const all = [...state.sprites.values()];
+    const parents = all.filter((s) => !s.d.baby).length;
+    const babyCount = all.length - parents;
+    const inside = global.App.state.dinos.filter((d) => T().jobOf(d.uid)).length;
+    const herd = babyCount
       ? `${parents} דִּינוֹזָאוּרִים וְ-${babyCount} תִּינוֹקוֹת בָּעוֹלָם`
       : `${parents} דִּינוֹזָאוּרִים בָּעוֹלָם`;
-    state.sprites.forEach((s) => (s.d.baby ? babyLife(s, my) : life(s, my)));
+    $('world-count').textContent = inside ? `${herd}, ${inside} בַּבִּנְיָנִים` : herd;
+  }
+
+  /* Hatched babies stay with their parent; they go into buildings with it too. */
+  function spawnBabies(d, par) {
+    const out = [];
+    (d.babies || []).forEach((b, i) => {
+      if (!b.hatched) return;
+      const bd = { uid: `b${d.uid}-${i}`, species: d.species, tint: global.Nursery.babyTint(d), legendary: d.legendary, outfit: b.outfit, baby: true, parentUid: d.uid, babyIdx: i };
+      const s = makeSprite(bd);
+      const p = nearParent(par, s);
+      s.x = p.x;
+      s.y = p.y;
+      place(s, p.x, p.y);
+      state.sprites.set(String(bd.uid), s);
+      $('world-herd').appendChild(s.el);
+      out.push(s);
+    });
+    return out;
+  }
+
+  /* A dino got a room: it walks to the building's door with its babies and goes in. */
+  function dinoToBuilding(uid, lot) {
+    refreshTown();
+    if (!state.on || state.mode !== 'mine') return;
+    const L = T().LOTS[lot];
+    const group = [...state.sprites.values()].filter((s) => String(s.d.uid) === String(uid) || String(s.d.parentUid) === String(uid));
+    if (state.sel && group.includes(state.sel)) closePanel();
+    group.forEach((s) => {
+      s.busy = true;
+      s.actId++;
+      setState(s, '', '');
+      state.sprites.delete(String(s.d.uid));
+      moveTo(s, L.x + rnd(-3, 3), L.y + 2, { speed: 18 }).then(() => {
+        s.el.classList.add('going-in');
+        setTimeout(() => s.el.remove(), 600);
+      });
+    });
+    updateCount();
+  }
+
+  /* A dino left its room: it comes out of the door and goes back to normal life. */
+  function dinoFromBuilding(uid, lot) {
+    refreshTown();
+    if (!state.on || state.mode !== 'mine') return;
+    const d = global.App.state.dinos.find((x) => x.uid === uid);
+    const L = T().LOTS[lot];
+    if (!d || state.sprites.has(String(uid))) return;
+    const my = state.token;
+    const s = makeSprite(d);
+    s.x = L.x;
+    s.y = L.y + 3;
+    place(s, s.x, s.y);
+    state.sprites.set(String(d.uid), s);
+    $('world-herd').appendChild(s.el);
+    updateBadge(s);
+    say(s, pick(['👋', '😊', '🌳']), 2000);
+    life(s, my);
+    spawnBabies(d, s).forEach((b) => babyLife(b, my));
+    updateCount();
   }
 
   function leave() {
@@ -1050,5 +1114,5 @@
     window.addEventListener('resize', layout);
   }
 
-  global.World = { init, enter, leave, openWardrobe, refreshTown, isOn: () => state.on, Pets, FOODS, setNight: (v) => { state.forceNight = v; if (state.on) $('world').classList.toggle('night', isNight()); } };
+  global.World = { init, enter, leave, openWardrobe, refreshTown, dinoToBuilding, dinoFromBuilding, isOn: () => state.on, Pets, FOODS, setNight: (v) => { state.forceNight = v; if (state.on) $('world').classList.toggle('night', isNight()); } };
 })(window);

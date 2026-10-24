@@ -101,7 +101,86 @@
             .filter((b, i, all) => b && global.TownData.BY_ID[b.type] && LOTS[b.lot] && all.findIndex((o) => o && o.lot === b.lot) === i)
             .map(cleanBuilding)
           : [],
+        jobs: {},
       };
+      // Keep only jobs of dinos that still exist, in rooms that exist and still have space.
+      const uids = new Set(s.dinos.map((d) => String(d.uid)));
+      const jobs = t.jobs && typeof t.jobs === 'object' ? t.jobs : {};
+      Object.keys(jobs).forEach((uid) => {
+        const j = jobs[uid];
+        if (!uids.has(uid) || !j) return;
+        const b = s.town.buildings.find((x) => x.lot === j.lot);
+        const r = b && b.rooms.find((x) => x.slot === j.slot);
+        if (!r) return;
+        const inRoom = Object.values(s.town.jobs).filter((o) => o.lot === j.lot && o.slot === j.slot).length;
+        if (inRoom < r.lvl) s.town.jobs[uid] = { lot: j.lot, slot: j.slot };
+      });
+    },
+
+    /* ---------- dinos in rooms ---------- */
+    jobOf(uid) {
+      const j = Town.state().jobs[String(uid)];
+      if (!j) return null;
+      const b = Town.buildingAt(j.lot);
+      const room = b && b.rooms.find((r) => r.slot === j.slot);
+      return room ? { lot: j.lot, slot: j.slot, b, room, def: TD().ROOMS[room.type] } : null;
+    },
+
+    occupants(lot, slot) {
+      const jobs = Town.state().jobs;
+      return global.App.state.dinos.filter((d) => {
+        const j = jobs[String(d.uid)];
+        return j && j.lot === lot && j.slot === slot;
+      });
+    },
+
+    countAt(lot) {
+      return Object.values(Town.state().jobs).filter((j) => j.lot === lot).length;
+    },
+
+    /* How a room changes needs per hour: `gain` raises a stat instead of letting it drop, `love` adds hearts. */
+    jobEffect(d) {
+      const job = Town.jobOf(d.uid);
+      if (!job) return null;
+      const m = 1 + 0.25 * (job.room.lvl - 1);
+      const act = job.def.act;
+      if (act === 'sleep') return { gain: { rest: 14 * m } };
+      if (act === 'eat') {
+        const chef = job.b.rooms.some((r) => TD().ROOMS[r.type].act === 'cook' && Town.occupants(job.lot, r.slot).length);
+        return { gain: { food: 14 * m * (chef ? 1.5 : 1) } };
+      }
+      if (act === 'wash') return { gain: { clean: 14 * m } };
+      if (act === 'play') return { gain: { fun: 14 * m } };
+      if (act === 'heal') return { gain: { food: 4 * m, fun: 4 * m, rest: 4 * m, clean: 4 * m } };
+      if (act === 'learn') return { gain: { fun: 5 * m }, love: 0.3 * m };
+      return { gain: { fun: 4 * m }, love: 0.5 * m }; // cook, work, animals: proud of the job
+    },
+
+    /* Puts a dino in a room (moving it from another room if needed). Returns false when the room is full. */
+    assign(uid, lot, slot) {
+      const d = global.App.state.dinos.find((x) => x.uid === uid);
+      const b = Town.buildingAt(lot);
+      const room = b && b.rooms.find((r) => r.slot === slot);
+      if (!d || !room) return false;
+      const others = Town.occupants(lot, slot).filter((x) => x.uid !== uid);
+      if (others.length >= room.lvl) return false;
+      global.World.Pets.decay(d); // settle needs under the old place first
+      const was = Town.jobOf(uid);
+      Town.state().jobs[String(uid)] = { lot, slot };
+      global.App.save();
+      if (!was) global.World.dinoToBuilding(uid, lot);
+      else global.World.refreshTown();
+      return true;
+    },
+
+    unassign(uid) {
+      const was = Town.jobOf(uid);
+      if (!was) return;
+      const d = global.App.state.dinos.find((x) => x.uid === uid);
+      if (d) global.World.Pets.decay(d);
+      delete Town.state().jobs[String(uid)];
+      global.App.save();
+      global.World.dinoFromBuilding(uid, was.lot);
     },
 
     state() {
@@ -141,7 +220,8 @@
         if (b) {
           const info = TD().BY_ID[b.type];
           const rising = fresh === l.id;
-          return `<button class="w-bld${rising ? ' rising' : ''}" data-lot="${l.id}" style="left:calc(var(--u)*${l.x - BLD_W / 2});top:calc(var(--u)*${l.y + 1 - BLD_H});width:calc(var(--u)*${BLD_W});height:calc(var(--u)*${BLD_H});z-index:${z}" aria-label="${info.name}">${TD().svg(b.type)}${rising ? '<span class="bld-crane">🏗️</span><span class="bld-dust d1">💨</span><span class="bld-dust d2">💨</span>' : ''}</button>`;
+          const n = Town.countAt(l.id);
+          return `<button class="w-bld${rising ? ' rising' : ''}" data-lot="${l.id}" style="left:calc(var(--u)*${l.x - BLD_W / 2});top:calc(var(--u)*${l.y + 1 - BLD_H});width:calc(var(--u)*${BLD_W});height:calc(var(--u)*${BLD_H});z-index:${z}" aria-label="${info.name}">${TD().svg(b.type)}${n ? `<span class="bld-pop">🦖 ${n}</span>` : ''}${rising ? '<span class="bld-crane">🏗️</span><span class="bld-dust d1">💨</span><span class="bld-dust d2">💨</span>' : ''}</button>`;
         }
         const locked = l.id >= open;
         return `<button class="w-lot${locked ? ' locked' : ''}" data-lot="${l.id}" style="left:calc(var(--u)*${l.x - LOT_W / 2});top:calc(var(--u)*${l.y - LOT_H - 1});width:calc(var(--u)*${LOT_W});height:calc(var(--u)*${LOT_H});z-index:${z}" aria-label="${locked ? 'מִגְרָשׁ נָעוּל' : 'מִגְרָשׁ לִבְנִיָּה'}">${locked ? '<span>🔒</span>' : '<span>🏗️</span><b>+</b>'}</button>`;

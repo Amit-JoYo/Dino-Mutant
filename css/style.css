@@ -403,6 +403,30 @@ body.ti-open { overflow: hidden; }
 .modal-card .tr-line { text-align: center; font-size: 1.1rem; margin: 4px 0; }
 .modal-card .tr-soon { text-align: center; }
 .tr-done { align-self: center; font-weight: 700; color: var(--green-d); }
+
+/* ---------- town: dinos in rooms ---------- */
+.ti-dinos { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+.ti-dino { position: absolute; bottom: 5%; display: block; }
+.ti-dsvg, .ti-dsvg .dino-svg, .tr-face .dino-svg { display: block; width: 100%; height: auto; }
+.ti-babies { position: absolute; bottom: 0; left: -12%; width: 55%; display: flex; }
+.ti-baby { flex: 1; }
+.ti-baby svg { display: block; width: 100%; height: auto; }
+.ti-dprop { position: absolute; top: -8%; right: 0; font-size: .95em; animation: floatup 2.2s ease-out infinite; }
+.bld-pop { position: absolute; top: -7%; left: 50%; transform: translateX(-50%); background: #fff; color: var(--ink); border-radius: 99px; font-size: calc(var(--u, 3px) * 4.2); font-weight: 700; padding: 0 calc(var(--u, 3px) * 1.6); white-space: nowrap; box-shadow: 0 1px 3px rgba(0, 0, 0, .3); pointer-events: none; }
+.w-dino.going-in { opacity: 0; transform: translate(-50%, -100%) scale(.5); transition: opacity .5s, transform .5s !important; }
+.tr-who { background: #f4fbf6; border-radius: 14px; padding: 8px 10px; margin: 8px 0; }
+.modal-card .tr-who h3 { text-align: center; margin: 0 0 4px; font-size: 1.05rem; }
+.tr-occ { display: flex; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px dashed #cfe3d6; }
+.tr-occ b { flex: 1; text-align: right; }
+.tr-face { width: 56px; flex: none; display: block; }
+.tr-seat { width: 100%; margin-top: 6px; font: inherit; font-weight: 700; color: var(--green-d); border: 3px dashed #9fd8b0; background: #fff; border-radius: 12px; padding: 10px; cursor: pointer; }
+.modal-card .tr-full { text-align: center; margin: 6px 0 0; font-weight: 700; }
+.tp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 6px 0; max-height: 60vh; overflow-y: auto; padding: 2px; }
+.tp-card { position: relative; font: inherit; border: 3px solid #cfe3d6; background: #f4fbf6; border-radius: 14px; padding: 6px 4px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.tp-card .tr-face { width: 80%; }
+.tp-card b { font-size: .85rem; line-height: 1.2; }
+.tp-card small { font-size: .75rem; color: var(--muted); }
+.tp-need { position: absolute; top: 4px; left: 6px; font-style: normal; font-size: 1.1rem; animation: pulse 1.2s infinite; }
 .w-prop-item { position: absolute; transform: translate(-50%, -100%); line-height: 1; }
 .w-prop-item.far { opacity: .85; }
 .world.night .w-sky { background: linear-gradient(180deg, #0d1235, #2d3c80); }
