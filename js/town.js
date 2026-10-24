@@ -20,6 +20,20 @@
   const BLD_W = 40;
   const BLD_H = 48;
   const TD = () => global.TownData;
+
+  /* Keeps a saved building valid: 1-3 floors, known room types, one room per slot, levels 1-3. */
+  function cleanBuilding(b) {
+    const D = TD();
+    const floors = Math.max(1, Math.min(D.MAX_FLOORS, Math.floor(Number(b.floors)) || 1));
+    const allowed = D.ROOMS_OF[b.type];
+    const seen = new Set();
+    const rooms = (Array.isArray(b.rooms) ? b.rooms : []).filter((r) => {
+      const ok = r && allowed.includes(r.type) && Number.isInteger(r.slot) && r.slot >= 0 && r.slot < floors * 2 && !seen.has(r.slot);
+      if (ok) seen.add(r.slot);
+      return ok;
+    }).map((r) => ({ slot: r.slot, type: r.type, lvl: Math.max(1, Math.min(3, Math.floor(Number(r.lvl)) || 1)) }));
+    return { lot: b.lot, type: b.type, floors, rooms, t: Number(b.t) || 0 };
+  }
   // Lots stand on the top edge of a road. Opened in order of distance from the meadow.
   const LOTS = [
     ...[134, 182, 230, 278, 326, 374].map((x) => ({ x, y: 104 })),
@@ -83,7 +97,9 @@
         stars: Number(t.stars) || 0,
         lots: Math.max(START_LOTS, Number(t.lots) || 0),
         buildings: Array.isArray(t.buildings)
-          ? t.buildings.filter((b, i, all) => b && global.TownData.BY_ID[b.type] && LOTS[b.lot] && all.findIndex((o) => o && o.lot === b.lot) === i)
+          ? t.buildings
+            .filter((b, i, all) => b && global.TownData.BY_ID[b.type] && LOTS[b.lot] && all.findIndex((o) => o && o.lot === b.lot) === i)
+            .map(cleanBuilding)
           : [],
       };
     },
@@ -155,7 +171,7 @@
 
     onLot(id) {
       const App = global.App;
-      if (Town.buildingAt(id)) return openBuilding(id);
+      if (Town.buildingAt(id)) return global.TownInside.open(id);
       if (id >= Town.state().lots) return App.toast('🔒 הַמִּגְרָשׁ הַזֶּה יִפָּתַח בְּהֶמְשֵׁךְ');
       openCatalog(id);
     },
@@ -256,22 +272,9 @@
       App.celebrate({
         title: `🎉 ${b.name} ${b.f ? 'חֲדָשָׁה' : 'חָדָשׁ'} בָּעִיר!`,
         dinoHtml: `<div class="tc-big">${TD().svg(type)}</div>`,
-        lines: ['בְּקָרוֹב אֶפְשָׁר יִהְיֶה לְהִכָּנֵס פְּנִימָה וְלִבְנוֹת חֲדָרִים! 🚪'],
+        lines: ['לוֹחֲצִים עַל הַבִּנְיָן כְּדֵי לְהִכָּנֵס וְלִבְנוֹת חֲדָרִים! 🚪'],
       });
     }, 2700);
-  }
-
-  function openBuilding(lotId) {
-    const App = global.App;
-    const b = TD().BY_ID[Town.buildingAt(lotId).type];
-    modal(`
-      <h2>${b.look.sign} ${b.name}</h2>
-      <div class="tc-big">${TD().svg(b.id)}</div>
-      <p class="tc-desc">${b.desc}</p>
-      <p class="muted">🚪 בְּקָרוֹב אֶפְשָׁר יִהְיֶה לְהִכָּנֵס פְּנִימָה וְלִבְנוֹת חֲדָרִים!</p>
-      <div class="row"><button class="btn small" data-say>🔊 הַקְרֵא לִי</button><button class="btn ghost" data-close>סְגִירָה</button></div>`, (e) => {
-      if (e.target.closest('[data-say]')) App.speak(`${noEmoji(b.name)}. ${noEmoji(b.desc)}`);
-    });
   }
 
   global.Town = Town;

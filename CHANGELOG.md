@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-10-25: Dino Town, part 3: inside the buildings
+
+### Added
+- **Tap a building to go inside.** A full-screen side view shows its floors, with 2 rooms per floor, the building's own colours and roof, and the door at the bottom.
+- **Build rooms:** tap ➕ on an empty spot and choose from that building's rooms (4 per building, 2-3 for the cinema, library, fire station and museum, 43 in all). Each room has its name with full nikud (🔊 reads it), what dinos do there (sleep, eat, cook, play, wash, care, learn, look after animals, work) and a price of 20-35 DNA. The same room can be built more than once (for example, a house with 3 bedrooms).
+- **Upgrade rooms** up to ⭐⭐⭐. Each level adds furniture and space for one more dino (used in the next update), and a 3-star room gets a gold frame.
+- **More floors:** when every room is full, a 2nd floor (25 DNA) and a 3rd floor (40 DNA) can be added. Parks and pools get more "areas" instead of floors.
+- Each new room, upgrade and floor is +1 ⭐ town star.
+- `js/town-inside.js`: the inside view. Saved buildings are checked on load (valid room types, slots and levels).
+
+### Changed
+- Service worker cache bumped to `v24`.
+
 ## 2026-10-25: Dino Town, part 2: building
 
 ### Added

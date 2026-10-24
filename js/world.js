@@ -1022,6 +1022,7 @@
     clearInterval(state.refreshT);
     clearInterval(state.incomingT);
     clearInterval(state.dotsT);
+    if (global.TownInside) global.TownInside.close();
     state.sel = null;
     state.lock = false;
     if ($('pet-panel')) $('pet-panel').hidden = true;
