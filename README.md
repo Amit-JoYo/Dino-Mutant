@@ -58,6 +58,7 @@ Add entries to `stories.json`. Each needs an `id`, a `title`, and either `text` 
 | `js/town-data.js` | Building and room catalog (names, costs, activities, looks) and the SVG building fronts |
 | `js/town-inside.js` | Inside a building: floors, building and upgrading rooms, adding floors, putting dinos in rooms |
 | `js/town-fun.js` | What each building does: lessons, shop till, farm goods and meals, egg room, rescues, museum |
+| `town-plan.md` | Dino Town design: what is built, what to check, and ideas for later |
 | `js/share.js` | WhatsApp picture cards (canvas to PNG) |
 | `js/cloud.js` | Class sharing: join, sync, classmates, reactions, gifts |
 | `js/social.js` | Reaction and gift screens |
