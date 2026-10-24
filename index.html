@@ -99,7 +99,7 @@
     <!-- World: the whole herd living together -->
     <section class="screen" id="screen-world" hidden>
       <div class="card world-card">
-        <div class="world-head"><h2>🌍 עוֹלַם הַדִּינוֹזָאוּרִים</h2><span id="world-count" class="muted"></span></div>
+        <div class="world-head"><h2>🌍 עוֹלַם הַדִּינוֹזָאוּרִים</h2><span class="w-starchip" id="world-stars-chip"></span><span id="world-count" class="muted"></span></div>
         <div class="world-tabs" id="world-tabs" hidden>
           <button class="chip on" data-wm="mine">🦖 הַדִּינוֹזָאוּרִים שֶׁלִּי</button>
           <button class="chip" data-wm="class">🏫 הַכִּתָּה</button>
@@ -113,11 +113,14 @@
               <div class="w-pond"></div>
               <div class="w-roads" id="world-roads"></div>
               <div class="w-lots" id="world-lots"></div>
+              <div class="w-decors" id="world-decor"></div>
               <div class="w-props" id="world-props"></div>
               <div class="w-herd" id="world-herd"></div>
             </div>
           </div>
           <button class="w-home" id="world-home" aria-label="חֲזָרָה לַבַּיִת">🏡</button>
+          <button class="w-home w-deco-btn" id="world-decor-btn" aria-label="קִשּׁוּטִים">🌷</button>
+          <div class="w-banner" id="world-banner" hidden></div>
           <div class="w-mini" id="world-mini" aria-hidden="true"></div>
         </div>
         <p class="muted">גּוֹלְלִים כְּדֵי לְטַיֵּל בָּעִיר 🗺️ וְלוֹחֲצִים עַל דִּינוֹזָאוּר כְּדֵי לְטַפֵּל בּוֹ! 💕</p>
@@ -164,6 +167,7 @@
   <script src="js/town-data.js"></script>
   <script src="js/town.js"></script>
   <script src="js/town-inside.js"></script>
+  <script src="js/town-fun.js"></script>
   <script src="js/world.js"></script>
   <script src="js/firebase-config.js"></script>
   <script src="js/fsrest.js"></script>

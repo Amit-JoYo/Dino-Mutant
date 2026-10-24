@@ -53,6 +53,7 @@
           hatched: b.hatched === true,
           hatchAt: Number.isFinite(b.hatchAt) ? b.hatchAt : now + HATCH_MS,
           outfit: b.outfit && typeof b.outfit === 'object' ? b.outfit : {},
+          ...(b.fast ? { fast: true } : {}), // already sped up in the town's egg room
         }));
       for (let i = 0; i < old && d.babies.length < MAX; i++) d.babies.push({ hatched: false, hatchAt: now + HATCH_MS, outfit: {} });
       delete d.eggs;

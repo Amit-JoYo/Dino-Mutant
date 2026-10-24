@@ -232,6 +232,7 @@
     $('world-props').innerHTML = PROPS.map((p) =>
       `<span class="w-prop-item${p.far ? ' far' : ''}" style="left:calc(var(--u)*${p.x});top:calc(var(--u)*${p.y});font-size:calc(var(--u)*${p.k});z-index:${p.far ? 0 : Math.round(p.y * 10)}">${p.e}</span>`
     ).join('') + town.decor;
+    renderDecor();
     if (!$('world-stars').childElementCount) {
       let stars = '';
       for (let i = 0; i < 40; i++) stars += `<i style="left:${rnd(1, 99).toFixed(1)}%;top:${rnd(4, 70).toFixed(1)}%">✨</i>`;
@@ -547,6 +548,7 @@
         <button class="btn pa aqua" data-pet="wash"><span>🛁</span>לִרְחֹץ</button>
         <button class="btn pa pink" data-pet="hug"><span>🤗</span>חִבּוּק</button>
         <button class="btn pa gold" data-pet="dress"><span>👗</span>לְהַלְבִּישׁ</button>
+        <button class="btn pa" data-pet="room"><span>🏠</span>לְחֶדֶר</button>
         <button class="btn pa aqua" data-pet="share"><span>📤</span>שִׁתּוּף</button>
       </div>
       <div class="food-row" id="food-row" hidden>${FOODS.map((f) => `<button class="food" data-food="${f.id}"><span>${f.e}</span><small>${f.name}</small></button>`).join('')}</div>
@@ -672,6 +674,8 @@
       renameDino(state.sel);
     } else if (kind === 'share') {
       global.Share.shareDino(state.sel.d);
+    } else if (kind === 'room') {
+      if (!state.lock) global.TownInside.pickRoomFor(state.sel.d.uid);
     } else {
       doAction(kind);
     }
@@ -834,6 +838,85 @@
       const el = document.querySelector(`.w-bld[data-lot="${fresh}"]`);
       if (el) el.classList.remove('rising');
     }, 3200);
+  }
+
+  /* ------------------------------------------------------------------ decorating the town */
+  function renderDecor() {
+    $('world-decor').innerHTML = T().decorHtml();
+  }
+
+  function openDecorCatalog() {
+    const App = global.App;
+    const TD = global.TownData;
+    const cards = TD.DECOR.map((it) => `<button class="tc-card${App.state.dna < it.cost ? ' poor' : ''}" data-deco="${it.id}"><span class="tq-e">${it.e}</span><b>${it.name}</b><em>🧬 ${it.cost}</em></button>`).join('');
+    App.openModal(`
+      <h2>🌷 קִשּׁוּטִים לָעִיר</h2>
+      <div class="tc-dna">🧬 <b>${App.state.dna}</b></div>
+      <div class="tc-grid">${cards}</div>
+      <div class="row"><button class="btn ghost" data-close>בִּטּוּל</button></div>`, () => { $('modal-card').onclick = null; });
+    $('modal-card').onclick = (e) => {
+      const c = e.target.closest('[data-deco]');
+      if (!c) return;
+      App.closeModal();
+      startDecor(c.dataset.deco);
+    };
+  }
+
+  function startDecor(id) {
+    const it = global.TownData.DECOR_BY_ID[id];
+    state.decor = id;
+    closePanel();
+    $('world').classList.add('decorating');
+    const banner = $('world-banner');
+    banner.hidden = false;
+    banner.innerHTML = `<span>${it.e} לוֹחֲצִים עַל הַדֶּשֶׁא כְּדֵי לָשִׂים ${it.name} · 🧬 ${it.cost}</span><small>לְחִיצָה עַל קִשּׁוּט מַחְזִירָה אוֹתוֹ</small><span class="w-banner-btns"><button class="btn small ghost" data-deco-change>🔄 אַחֵר</button><button class="btn small" data-deco-done>✔ סִיַּמְתִּי</button></span>`;
+  }
+
+  function stopDecor() {
+    state.decor = null;
+    $('world').classList.remove('decorating');
+    $('world-banner').hidden = true;
+  }
+
+  /* While decorating, a tap on the map places the chosen item (or takes back a placed one, with a refund). */
+  function onDecorTap(e) {
+    if (!state.decor) return;
+    e.stopPropagation();
+    e.preventDefault();
+    const App = global.App;
+    const TD = global.TownData;
+    const t = T().state();
+    const placed = e.target.closest('[data-decor]');
+    if (placed) {
+      const p = t.decor[Number(placed.dataset.decor)];
+      if (!p) return;
+      t.decor.splice(Number(placed.dataset.decor), 1);
+      App.state.dna += TD.DECOR_BY_ID[p.id].cost;
+      App.refreshHud();
+      App.save();
+      renderDecor();
+      App.toast('↩️ הַקִּשּׁוּט הוּסַר וְהַדנ״א חָזַר');
+      return;
+    }
+    const it = TD.DECOR_BY_ID[state.decor];
+    const mr = $('world-map').getBoundingClientRect();
+    const u = U();
+    const x = (e.clientX - mr.left) / u;
+    const y = (e.clientY - mr.top) / u + it.k * 0.45; // the item stands on its base; centre it under the finger
+    if (!T().canPlace(x, y)) return App.toast('אִי אֶפְשָׁר לָשִׂים כָּאן. בּוֹחֲרִים מָקוֹם עַל הַדֶּשֶׁא 🌱');
+    if (App.state.dna < it.cost) return App.toast(`צָרִיךְ עוֹד ${it.cost - App.state.dna} דנ״א. קִרְאִי סִפּוּר אוֹ פִּתְרִי חִידוֹת! 📖🧩`);
+    if (T().placeDecor(it.id, x, y) !== 'ok') return App.toast('יֵשׁ כְּבָר הַרְבֵּה קִשּׁוּטִים 🙂');
+    App.state.dna -= it.cost;
+    App.refreshHud();
+    App.save();
+    renderDecor();
+    const last = $('world-decor').lastElementChild;
+    if (last) last.classList.add('fresh');
+  }
+
+  function onBannerClick(e) {
+    if (e.target.closest('[data-deco-done]')) stopDecor();
+    else if (e.target.closest('[data-deco-change]')) openDecorCatalog();
   }
 
   function goHome(smooth) {
@@ -1009,6 +1092,9 @@
   }
 
   function updateCount() {
+    const t = T().state();
+    const next = T().nextGoal();
+    $('world-stars-chip').textContent = `⭐ ${t.stars}${next ? ` · 🔓 ${next}` : ''}`;
     if (state.mode !== 'mine') return;
     const all = [...state.sprites.values()];
     const parents = all.filter((s) => !s.d.baby).length;
@@ -1086,6 +1172,7 @@
     clearInterval(state.refreshT);
     clearInterval(state.incomingT);
     clearInterval(state.dotsT);
+    if ($('world-banner')) stopDecor();
     if (global.TownInside) global.TownInside.close();
     state.sel = null;
     state.lock = false;
@@ -1102,6 +1189,9 @@
       if (lot) T().onLot(Number(lot.dataset.lot));
     });
     $('world-home').addEventListener('click', () => goHome(true));
+    $('world-decor-btn').addEventListener('click', openDecorCatalog);
+    $('world-banner').addEventListener('click', onBannerClick);
+    $('world-map').addEventListener('click', onDecorTap, true);
     $('world-mini').addEventListener('click', onMiniClick);
     initDrag();
     $('world-tabs').addEventListener('click', (e) => {

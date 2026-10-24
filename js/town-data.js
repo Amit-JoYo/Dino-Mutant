@@ -100,6 +100,58 @@
   const FLOOR_COST = [0, 25, 40]; // price of the 2nd and 3rd floor
   const upgradeCost = (roomId, lvl) => Math.round(ROOMS[roomId].cost * (lvl === 1 ? 1 : 1.6));
 
+  /* ⭐ town stars needed to open lot i (lots 0-5 are open from the start). */
+  const START_LOTS = 6;
+  const lotNeed = (i) => (i < START_LOTS ? 0 : 10 + (i - START_LOTS) * 6);
+
+  // Decorations placed freely on the town grass. k = size in map units.
+  const DECOR = [
+    { id: 'flowers', e: '🌷', name: 'פְּרָחִים', cost: 3, k: 6 },
+    { id: 'sunflower', e: '🌻', name: 'חַמָּנִיָּה', cost: 3, k: 7 },
+    { id: 'tree', e: '🌳', name: 'עֵץ', cost: 4, k: 12 },
+    { id: 'pine', e: '🌲', name: 'אֹרֶן', cost: 4, k: 11 },
+    { id: 'balloons', e: '🎈', name: 'בָּלוֹנִים', cost: 4, k: 7 },
+    { id: 'chair', e: '🪑', name: 'כִּסֵּא', cost: 5, k: 7 },
+    { id: 'mailbox', e: '📮', name: 'תֵּבַת דֹּאַר', cost: 5, k: 7 },
+    { id: 'lamp', e: '🏮', name: 'פָּנָס', cost: 6, k: 7, glow: true },
+    { id: 'tent', e: '⛺', name: 'אֹהֶל', cost: 8, k: 12 },
+    { id: 'statue', e: '🗿', name: 'פֶּסֶל', cost: 12, k: 12 },
+    { id: 'fountain', e: '⛲', name: 'מִזְרָקָה', cost: 15, k: 14 },
+    { id: 'rainbow', e: '🌈', name: 'קֶשֶׁת', cost: 20, k: 20 },
+  ];
+  const DECOR_BY_ID = Object.fromEntries(DECOR.map((d) => [d.id, d]));
+
+  // Farm rooms make goods for the restaurant.
+  const GOODS = { coop: { id: 'egg', e: '🥚' }, cowbarn: { id: 'milk', e: '🥛' }, veggies: { id: 'veg', e: '🥕' } };
+
+  // Things sold in shop rooms. g: 'f' feminine, 'p' plural (for "costs").
+  const SHOP = {
+    checkout: [['🍎', 'תַּפּוּחַ'], ['🧃', 'מִיץ'], ['🍪', 'עוּגִיָּה', 'f'], ['📒', 'מַחְבֶּרֶת', 'f']],
+    icecart: [['🍦', 'גְּלִידָה', 'f'], ['🍫', 'שׁוֹקוֹלָד'], ['🧁', 'קַאפְּקֵייק']],
+    popcorn: [['🍿', 'פּוֹפְּקוֹרְן'], ['🥤', 'שְׁתִיָּה', 'f'], ['🍬', 'סֻכָּרִיָּה', 'f']],
+    toyshop: [['🧸', 'דֻּבִּי'], ['⚽', 'כַּדּוּר'], ['🎈', 'בָּלוֹן'], ['🪀', 'יוֹ-יוֹ']],
+    clothes: [['👒', 'כּוֹבַע'], ['👟', 'נַעֲלַיִם', 'p'], ['🧣', 'צָעִיף'], ['👕', 'חֻלְצָה', 'f']],
+  };
+
+  // Short facts for the museum, one per species (the name is shown separately).
+  const FACTS = {
+    trex: 'הָיוּ לוֹ שִׁנַּיִם גְּדוֹלוֹת כְּמוֹ בָּנָנוֹת!',
+    brachio: 'הוּא הָיָה גָּבוֹהַּ כְּמוֹ בִּנְיָן שֶׁל אַרְבַּע קוֹמוֹת.',
+    trike: 'הָיוּ לוֹ שָׁלוֹשׁ קַרְנַיִם עַל הָרֹאשׁ.',
+    ptero: 'הוּא לֹא הָיָה דִּינוֹזָאוּר, אֶלָּא זוֹחֵל מְעוֹפֵף.',
+    stego: 'הָיָה לוֹ מֹחַ קָטָן, בְּעֵרֶךְ כְּמוֹ אֱגוֹז.',
+    anky: 'הָיָה לוֹ זָנָב שֶׁנִּרְאֶה כְּמוֹ פַּטִּישׁ.',
+    raptor: 'הוּא הָיָה קָטָן וּמָהִיר, וְהָיוּ לוֹ נוֹצוֹת.',
+    para: 'הָיְתָה לוֹ כַּרְבֹּלֶת שֶׁהִשְׁמִיעָה קוֹלוֹת כְּמוֹ חֲצוֹצְרָה.',
+    spino: 'הָיָה לוֹ מִפְרָשׂ גָּדוֹל עַל הַגַּב, וְהוּא אָהַב לָדוּג דָּגִים.',
+    plesio: 'הוּא חַי בַּיָּם וְשָׂחָה עִם אַרְבָּעָה סְנַפִּירִים.',
+    compy: 'הוּא הָיָה קָטָן, בְּעֵרֶךְ כְּמוֹ תַּרְנְגֹלֶת.',
+    igua: 'הָיָה לוֹ קוֹץ חַד בִּמְקוֹם אֲגוּדָל.',
+    diplo: 'הָיוּ לוֹ צַוָּאר אָרֹךְ וְזָנָב אָרֹךְ מְאֹד.',
+    dilo: 'הָיוּ לוֹ שְׁתֵּי כַּרְבּוֹלוֹת עַל הָרֹאשׁ.',
+    pachy: 'הָיָה לוֹ רֹאשׁ עָבֶה וְקָשֶׁה כְּמוֹ קַסְדָּה.',
+  };
+
   const emoji = (e, x, y, size) => `<text x="${x}" y="${y}" font-size="${size}" text-anchor="middle" dominant-baseline="central">${e}</text>`;
 
   function windows(look) {
@@ -155,5 +207,5 @@
     return `<svg class="bld-svg" viewBox="0 0 100 120" aria-hidden="true">${shadow}${art}</svg>`;
   }
 
-  global.TownData = { BUILDINGS, BY_ID, ACTS, ROOMS, ROOMS_OF, MAX_FLOORS, FLOOR_COST, upgradeCost, svg };
+  global.TownData = { BUILDINGS, BY_ID, ACTS, ROOMS, ROOMS_OF, MAX_FLOORS, FLOOR_COST, upgradeCost, START_LOTS, lotNeed, DECOR, DECOR_BY_ID, GOODS, SHOP, FACTS, svg };
 })(window);

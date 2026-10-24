@@ -277,6 +277,8 @@
 
   function finishParagraph() {
     const App = global.App;
+    const listened = global.Town ? global.Town.onRead() : 0;
+    if (listened) App.toast(`📚 ${listened === 1 ? 'דִּינוֹזָאוּר אֶחָד הִקְשִׁיב' : `${listened} דִּינוֹזָאוּרִים הִקְשִׁיבוּ`} בַּסִּפְרִיָּה ❤️`);
     const pr = progressOf(story.id);
     const rereading = pr.done;
     const lastPar = parIdx === paragraphs.length - 1;

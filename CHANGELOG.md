@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026-10-25: Dino Town, part 5: stars, decorations and what each building does
+
+### Added
+- **⭐ Town stars open new lots.** Stars (3 per building, 1 per room, upgrade or floor) are shown next to the World title with the next goal ("⭐ 12 · 🔓 16"). Lot 7 opens at 10 stars, then every 6 stars more (up to 100 for the last lot). Locked lots show how many stars they need. Older saves get the lots their stars already earned.
+- **Decorations:** the 🌷 button on the map opens 12 decorations (flowers, sunflower, trees, balloons, chair, mailbox, lantern, tent, statue, fountain, rainbow; 3-20 DNA). Tap the grass to place one, as many as she likes; tap a placed one to take it back (full refund). Lanterns glow at night.
+- **Send a dino to a room from the map:** the new "🏠 לְחֶדֶר" button in a dino's care panel lists every room with space; rooms that fix its lowest need are marked ✨.
+- **What each building does:**
+  - **School** (classroom, art room): "📝 שִׁעוּר" gives a Lab puzzle. A right answer earns the same DNA as the lab, and every student dino gets a heart.
+  - **Library** (reading corner, story time): reading any story paragraph gives every dino sitting there a heart. A button jumps straight to the Reading tab.
+  - **Shops** (mall checkout, clothes and toy shops, ice-cream stand, popcorn stand): "🪙 לְשַׂחֵק בַּקֻּפָּה" is a till game. The item costs 3-20 ₪ and she pays exactly that with 1, 2, 5 and 10 coins (too much → try again; she sees how much is still missing). +3 DNA per customer. Needs a seller dino in the shop.
+  - **Hospital egg room:** a dino that goes in has its eggs hatch 1.5-2.5× sooner (once per egg), and the card shows the countdowns.
+  - **Farm → restaurant:** dinos in the chicken coop, cowshed and vegetable patch make 🥚 🥛 🥕 over time; she collects them into the store room. In the restaurant's dining room, "🍳 אֲרוּחַת חַוָּה" gives every diner a farm meal (+30 food, +1 heart).
+  - **Fire station rescue room:** "🚨 יוֹצְאִים לְהַצָּלָה" is a small scene (a cat, kitten or chick is stuck): tap the ladder, then the animal. Hearts for the firefighters; once an hour.
+  - **Museum:** the fossil hall shows a short fact (full nikud, 🔊) about every species she owns; the legends hall shows her legendary dinos.
+- `js/town-fun.js`: the building features.
+
+### Changed
+- Service worker cache bumped to `v26`.
+
 ## 2026-10-25: Dino Town, part 4: dinos in rooms
 
 ### Added

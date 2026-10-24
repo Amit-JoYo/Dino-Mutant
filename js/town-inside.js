@@ -26,7 +26,7 @@
   }
 
   function addStar() {
-    global.Town.state().stars += 1;
+    global.Town.addStars(1);
   }
 
   // How a dino looks while doing a room's activity (reuses the World's care animations).
@@ -92,6 +92,7 @@
         <button class="ti-btn" data-x aria-label="סְגִירָה">✖</button>
         <h2>${info.look.sign} ${info.name}</h2>
         <button class="ti-btn" data-say aria-label="הַקְרֵא לִי">🔊</button>
+        <span class="ti-dna">⭐ <b>${global.Town.state().stars}</b></span>
         <span class="ti-dna">🧬 <b>${App().state.dna}</b></span>
       </div>
       <div class="ti-body" id="ti-body">
@@ -127,6 +128,7 @@
     if (el) el.hidden = true;
     document.body.classList.remove('ti-open');
     st.lot = -1;
+    if (global.World && global.World.refreshTown) global.World.refreshTown();
   }
 
   function onClick(e) {
@@ -231,6 +233,7 @@
         <h2>${def.e} ${def.name}</h2>
         <div class="ti-room big lvl${r.lvl}" style="--rw:${act.wall}">${roomHtml(r, st.lot)}</div>
         <p class="tr-line">${effect}${chef ? '<br>👩‍🍳 יֵשׁ שֵׁף בַּמִּטְבָּח, אָז הָאֹכֶל טָעִים יוֹתֵר!' : ''}</p>
+        ${global.TownFun ? global.TownFun.cardHtml(b, r, st.lot) : ''}
         ${whoHtml(r)}
         <p class="tr-line">${'⭐'.repeat(r.lvl)}${'☆'.repeat(3 - r.lvl)} · ${r.lvl === 1 ? 'מָקוֹם לְדִינוֹזָאוּר אֶחָד' : `מָקוֹם לְ-${r.lvl} דִּינוֹזָאוּרִים`}</p>
         <div class="row">
@@ -258,11 +261,16 @@
     };
 
     const draw = () => (picking ? drawPicker() : drawRoom());
-    A.openModal('', () => { $('modal-card').onclick = null; });
+    if (global.TownFun) global.TownFun.reset();
+    A.openModal('', () => {
+      $('modal-card').onclick = null;
+      if (global.TownFun) global.TownFun.reset();
+    });
     draw();
     $('modal-card').onclick = (e) => {
       const r = roomAt(b, slot);
       const def = TD().ROOMS[r.type];
+      if (global.TownFun && global.TownFun.onClick(e, b, r, st.lot, () => { render(); draw(); })) return;
       if (e.target.closest('[data-back]')) {
         picking = false;
         return draw();
@@ -302,5 +310,41 @@
     };
   }
 
-  global.TownInside = { open, close, isOpen: () => st.lot >= 0 };
+  /* From a dino's care panel on the map: pick any room in town that has space. Rooms that fix its lowest need get a ✨. */
+  const FIXES = { food: 'eat', fun: 'play', rest: 'sleep', clean: 'wash' };
+  function pickRoomFor(uid) {
+    const A = App();
+    const d = A.state.dinos.find((x) => x.uid === uid);
+    if (!d) return;
+    const Pets = global.World.Pets;
+    Pets.decay(d);
+    const low = Pets.lowest(d);
+    const needy = Pets.ensure(d)[low.key] < 40;
+    const job = global.Town.jobOf(uid);
+    const rows = [];
+    global.Town.state().buildings.slice().sort((a, b) => a.lot - b.lot).forEach((b) => {
+      const info = TD().BY_ID[b.type];
+      b.rooms.slice().sort((x, y) => x.slot - y.slot).forEach((r) => {
+        const n = global.Town.occupants(b.lot, r.slot).length;
+        if (n >= r.lvl || (job && job.lot === b.lot && job.slot === r.slot)) return;
+        const def = TD().ROOMS[r.type];
+        const act = TD().ACTS[def.act];
+        const good = needy && FIXES[low.key] === def.act;
+        rows.push(`<button class="tq-row${good ? ' good' : ''}" data-lot="${b.lot}" data-slot="${r.slot}" style="--rw:${act.wall}"><span class="tq-e">${def.e}</span><span class="tq-txt"><b>${def.name}</b><small>${info.look.sign} ${info.name} · ${act.e} ${act.name}</small></span><em>${good ? '✨ ' : ''}${n}/${r.lvl}</em></button>`);
+      });
+    });
+    A.openModal(`
+      <h2>🏠 לְאָן הוֹלְכִים?</h2>
+      <div class="tq-who"><span class="tr-face">${A.dinoHtml(d)}</span><b>${esc(A.dinoName(d))}</b>${needy ? `<span>צָרִיךְ: ${low.icon} ${low.label}</span>` : ''}</div>
+      <div class="tq-list">${rows.join('') || '<p class="tr-line">אֵין חֶדֶר פָּנוּי. בּוֹנִים חֲדָרִים בָּעִיר! 🏗️</p>'}</div>
+      <div class="row"><button class="btn ghost small" data-close>בִּטּוּל</button></div>`, () => { $('modal-card').onclick = null; });
+    $('modal-card').onclick = (e) => {
+      const row = e.target.closest('[data-lot]');
+      if (!row) return;
+      if (global.Town.assign(uid, Number(row.dataset.lot), Number(row.dataset.slot))) A.toast(`${A.dinoName(d)} בַּחֶדֶר! 🎉`);
+      A.closeModal();
+    };
+  }
+
+  global.TownInside = { open, close, pickRoomFor, isOpen: () => st.lot >= 0 };
 })(window);
