@@ -246,7 +246,35 @@
     };
   }
 
-  const GENERATORS = { bridge, tens, missing, story, words };
+  /* ---------- 6. Builder's questions (Dino Town; not in KINDS, so the lab never picks them) ---------- */
+  function build() {
+    const label = 'שְׁאֵלַת הַבַּנַּאי 👷';
+    const type = rnd(1, 4);
+    if (type === 1) {
+      const a = rnd(3, 9);
+      const b = rnd(Math.max(2, 11 - a), 9);
+      const text = `בַּבִּנְיָן יֵשׁ ${a} חַלּוֹנוֹת לְמַעְלָה וְ-${b} חַלּוֹנוֹת לְמַטָּה. כַּמָּה חַלּוֹנוֹת יֵשׁ בְּסַךְ הַכֹּל?`;
+      return { kind: 'build', label, prompt: text, equation: '', speak: text, answer: a + b, choices: numberChoices(a + b), hint: `זֶה חִבּוּר: ${a} + ${b}.` };
+    }
+    if (type === 2) {
+      const a = rnd(3, 9);
+      const c = rnd(Math.max(11, a + 2), Math.min(18, a + 9));
+      const text = `הַבַּנַּאי צָרִיךְ ${c} לְבֵנִים. יֵשׁ לוֹ כְּבָר ${a}. כַּמָּה לְבֵנִים עוֹד חֲסֵרוֹת לוֹ?`;
+      return { kind: 'build', label, prompt: text, equation: '', speak: text, answer: c - a, choices: numberChoices(c - a), hint: `כַּמָּה מוֹסִיפִים לְ-${a} כְּדֵי לְהַגִּיעַ לְ-${c}? ${c} - ${a}.` };
+    }
+    if (type === 3) {
+      const a = rnd(11, 18);
+      const b = rnd(Math.max(2, a - 9), 9);
+      const text = `הָיוּ ${a} דְּלָיֵי צֶבַע. הַבַּנַּאי הִשְׁתַּמֵּשׁ בְּ-${b}. כַּמָּה דְּלָיִים נִשְׁאֲרוּ?`;
+      return { kind: 'build', label, prompt: text, equation: '', speak: text, answer: a - b, choices: numberChoices(a - b), hint: `זֶה חִסּוּר: ${a} - ${b}.` };
+    }
+    const a = rnd(2, 5);
+    const n = rnd(2, 3);
+    const text = `בְּכָל קוֹמָה יֵשׁ ${a} חַלּוֹנוֹת. בַּבִּנְיָן יֵשׁ ${n} קוֹמוֹת. כַּמָּה חַלּוֹנוֹת יֵשׁ בַּבִּנְיָן?`;
+    return { kind: 'build', label, prompt: text, equation: '', speak: text, answer: a * n, choices: numberChoices(a * n), hint: `סוֹפְרִים כָּל קוֹמָה: ${Array(n).fill(a).join(' + ')}.` };
+  }
+
+  const GENERATORS = { bridge, tens, missing, story, words, build };
 
   function generate(kind, ctx) {
     let k = kind;

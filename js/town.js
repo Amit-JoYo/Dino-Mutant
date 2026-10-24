@@ -17,6 +17,9 @@
 
   const LOT_W = 38;
   const LOT_H = 34;
+  const BLD_W = 40;
+  const BLD_H = 48;
+  const TD = () => global.TownData;
   // Lots stand on the top edge of a road. Opened in order of distance from the meadow.
   const LOTS = [
     ...[134, 182, 230, 278, 326, 374].map((x) => ({ x, y: 104 })),
@@ -79,7 +82,9 @@
         v: 1,
         stars: Number(t.stars) || 0,
         lots: Math.max(START_LOTS, Number(t.lots) || 0),
-        buildings: Array.isArray(t.buildings) ? t.buildings : [],
+        buildings: Array.isArray(t.buildings)
+          ? t.buildings.filter((b, i, all) => b && global.TownData.BY_ID[b.type] && LOTS[b.lot] && all.findIndex((o) => o && o.lot === b.lot) === i)
+          : [],
       };
     },
 
@@ -108,14 +113,22 @@
       return p;
     },
 
-    mapHtml() {
-      const open = Town.state().lots;
+    mapHtml(fresh) {
+      const t = Town.state();
+      const open = t.lots;
       const roads = ROADS.map((r) =>
         `<div class="w-road${r.v ? ' v' : ''}" style="left:calc(var(--u)*${r.x0});top:calc(var(--u)*${r.y0});width:calc(var(--u)*${r.x1 - r.x0});height:calc(var(--u)*${r.y1 - r.y0})"></div>`
       ).join('');
       const lots = LOTS.map((l) => {
+        const z = Math.round(l.y * 10) - 5;
+        const b = Town.buildingAt(l.id);
+        if (b) {
+          const info = TD().BY_ID[b.type];
+          const rising = fresh === l.id;
+          return `<button class="w-bld${rising ? ' rising' : ''}" data-lot="${l.id}" style="left:calc(var(--u)*${l.x - BLD_W / 2});top:calc(var(--u)*${l.y + 1 - BLD_H});width:calc(var(--u)*${BLD_W});height:calc(var(--u)*${BLD_H});z-index:${z}" aria-label="${info.name}">${TD().svg(b.type)}${rising ? '<span class="bld-crane">🏗️</span><span class="bld-dust d1">💨</span><span class="bld-dust d2">💨</span>' : ''}</button>`;
+        }
         const locked = l.id >= open;
-        return `<button class="w-lot${locked ? ' locked' : ''}" data-lot="${l.id}" style="left:calc(var(--u)*${l.x - LOT_W / 2});top:calc(var(--u)*${l.y - LOT_H - 1});width:calc(var(--u)*${LOT_W});height:calc(var(--u)*${LOT_H});z-index:${Math.round(l.y * 10) - 5}" aria-label="${locked ? 'מִגְרָשׁ נָעוּל' : 'מִגְרָשׁ לִבְנִיָּה'}">${locked ? '<span>🔒</span>' : '<span>🏗️</span><b>+</b>'}</button>`;
+        return `<button class="w-lot${locked ? ' locked' : ''}" data-lot="${l.id}" style="left:calc(var(--u)*${l.x - LOT_W / 2});top:calc(var(--u)*${l.y - LOT_H - 1});width:calc(var(--u)*${LOT_W});height:calc(var(--u)*${LOT_H});z-index:${z}" aria-label="${locked ? 'מִגְרָשׁ נָעוּל' : 'מִגְרָשׁ לִבְנִיָּה'}">${locked ? '<span>🔒</span>' : '<span>🏗️</span><b>+</b>'}</button>`;
       }).join('');
       const decor = DECOR.map((p) =>
         `<span class="w-prop-item${p.far ? ' far' : ''}${p.float ? ' floaty' : ''}" style="left:calc(var(--u)*${p.x});top:calc(var(--u)*${p.y});font-size:calc(var(--u)*${p.k});z-index:${p.far ? 0 : Math.round(p.y * 10)}">${p.e}</span>`
@@ -127,16 +140,139 @@
       const pct = (v, of) => `${(v / of) * 100}%`;
       const roads = ROADS.map((r) => `<i class="mm-road" style="left:${pct(r.x0, MAP.w)};top:${pct(r.y0, MAP.h)};width:${pct(r.x1 - r.x0, MAP.w)};height:${pct(r.y1 - r.y0, MAP.h)}"></i>`).join('');
       const open = Town.state().lots;
-      const lots = LOTS.map((l) => `<i class="mm-lot${l.id >= open ? ' locked' : ''}" style="left:${pct(l.x - LOT_W / 2, MAP.w)};top:${pct(l.y - LOT_H, MAP.h)};width:${pct(LOT_W, MAP.w)};height:${pct(LOT_H, MAP.h)}"></i>`).join('');
+      const lots = LOTS.map((l) => {
+        const b = Town.buildingAt(l.id);
+        const look = b && TD().BY_ID[b.type].look;
+        const color = look ? `;background:${look.wall || (look.shape === 'pool' ? '#5ec8f2' : '#a5e08a')}` : '';
+        return `<i class="mm-lot${b ? ' built' : l.id >= open ? ' locked' : ''}" style="left:${pct(l.x - LOT_W / 2, MAP.w)};top:${pct(l.y - LOT_H, MAP.h)};width:${pct(LOT_W, MAP.w)};height:${pct(LOT_H, MAP.h)}${color}"></i>`;
+      }).join('');
       return `<i class="mm-sky"></i><i class="mm-pond"></i>${roads}${lots}<div class="mm-dots" id="mm-dots"></div><i class="mm-view" id="mm-view"></i>`;
+    },
+
+    buildingAt(lotId) {
+      return Town.state().buildings.find((b) => b.lot === lotId) || null;
     },
 
     onLot(id) {
       const App = global.App;
+      if (Town.buildingAt(id)) return openBuilding(id);
       if (id >= Town.state().lots) return App.toast('🔒 הַמִּגְרָשׁ הַזֶּה יִפָּתַח בְּהֶמְשֵׁךְ');
-      App.toast('🏗️ בְּקָרוֹב תּוּכְלִי לִבְנוֹת כָּאן!');
+      openCatalog(id);
     },
   };
+
+  /* ------------------------------------------------------------------ building flow */
+  const esc = (s) => global.Puzzles.escapeHtml(s);
+  const noEmoji = (s) => String(s).replace(/\p{Extended_Pictographic}|\uFE0F/gu, '').trim();
+  const needMore = (n) => global.App.toast(`צָרִיךְ עוֹד ${n} דנ״א. קִרְאִי סִפּוּר אוֹ פִּתְרִי חִידוֹת! 📖🧩`);
+  let pz = null;
+
+  function modal(html, onClick) {
+    const App = global.App;
+    if (global.document.getElementById('modal').hidden) {
+      App.openModal('', () => {
+        global.document.getElementById('modal-card').onclick = null;
+        if (pz) pz.destroy();
+        pz = null;
+      });
+    }
+    const card = global.document.getElementById('modal-card');
+    card.innerHTML = html;
+    card.onclick = onClick;
+  }
+
+  function openCatalog(lotId) {
+    const App = global.App;
+    const t = Town.state();
+    const cards = TD().BUILDINGS.map((b) => {
+      const have = t.buildings.filter((x) => x.type === b.id).length;
+      return `<button class="tc-card${App.state.dna < b.cost ? ' poor' : ''}" data-b="${b.id}">${TD().svg(b.id)}<b>${b.name}</b><em>🧬 ${b.cost}</em>${have ? `<i class="tc-have">✔${have > 1 ? ` ${have}` : ''}</i>` : ''}</button>`;
+    }).join('');
+    modal(`
+      <h2>🏗️ מָה נִבְנֶה כָּאן?</h2>
+      <div class="tc-dna">🧬 <b>${App.state.dna}</b></div>
+      <div class="tc-grid">${cards}</div>
+      <div class="row"><button class="btn ghost" data-close>בִּטּוּל</button></div>`, (e) => {
+      const c = e.target.closest('[data-b]');
+      if (c) openDetail(lotId, c.dataset.b);
+    });
+  }
+
+  function openDetail(lotId, type) {
+    const App = global.App;
+    const b = TD().BY_ID[type];
+    modal(`
+      <h2>${b.look.sign} ${b.name}</h2>
+      <div class="tc-big">${TD().svg(type)}</div>
+      <p class="tc-desc">${b.desc}</p>
+      <div class="row"><button class="btn small" data-say>🔊 הַקְרֵא לִי</button></div>
+      <div class="row">
+        <button class="btn big gold" data-go>לִבְנוֹת! 🧬 ${b.cost}</button>
+        <button class="btn ghost" data-back>➔ חֲזָרָה</button>
+      </div>`, (e) => {
+      if (e.target.closest('[data-say]')) return App.speak(`${noEmoji(b.name)}. ${noEmoji(b.desc)}`);
+      if (e.target.closest('[data-back]')) return openCatalog(lotId);
+      if (!e.target.closest('[data-go]')) return;
+      if (App.state.dna < b.cost) return needMore(b.cost - App.state.dna);
+      openQuestion(lotId, type);
+    });
+  }
+
+  /* One builder's question before the building goes up. Wrong answers just retry, with a hint. */
+  function openQuestion(lotId, type) {
+    modal(`
+      <h2>👷 עִזְרִי לַבַּנַּאי לִבְנוֹת!</h2>
+      <div id="tc-pz"></div>
+      <div class="row"><button class="btn ghost small" data-back>➔ חֲזָרָה</button></div>`, (e) => {
+      if (e.target.closest('[data-back]')) {
+        if (pz) pz.destroy();
+        pz = null;
+        openDetail(lotId, type);
+      }
+    });
+    pz = global.Puzzles.mount(global.document.getElementById('tc-pz'), {
+      kind: 'build',
+      onSolved: () => setTimeout(() => finishBuild(lotId, type), 1100),
+    });
+  }
+
+  function finishBuild(lotId, type) {
+    const App = global.App;
+    const b = TD().BY_ID[type];
+    const t = Town.state();
+    if (global.document.getElementById('modal').hidden || Town.buildingAt(lotId)) return;
+    if (App.state.dna < b.cost) {
+      App.closeModal();
+      return needMore(b.cost - App.state.dna);
+    }
+    App.state.dna -= b.cost;
+    t.buildings.push({ lot: lotId, type, floors: 1, rooms: [{ slot: 0, type: b.room, lvl: 1 }], t: Date.now() });
+    t.stars += 3;
+    App.save();
+    App.refreshHud();
+    App.closeModal();
+    if (global.World.refreshTown) global.World.refreshTown(lotId);
+    setTimeout(() => {
+      App.celebrate({
+        title: `🎉 ${b.name} ${b.f ? 'חֲדָשָׁה' : 'חָדָשׁ'} בָּעִיר!`,
+        dinoHtml: `<div class="tc-big">${TD().svg(type)}</div>`,
+        lines: ['בְּקָרוֹב אֶפְשָׁר יִהְיֶה לְהִכָּנֵס פְּנִימָה וְלִבְנוֹת חֲדָרִים! 🚪'],
+      });
+    }, 2700);
+  }
+
+  function openBuilding(lotId) {
+    const App = global.App;
+    const b = TD().BY_ID[Town.buildingAt(lotId).type];
+    modal(`
+      <h2>${b.look.sign} ${b.name}</h2>
+      <div class="tc-big">${TD().svg(b.id)}</div>
+      <p class="tc-desc">${b.desc}</p>
+      <p class="muted">🚪 בְּקָרוֹב אֶפְשָׁר יִהְיֶה לְהִכָּנֵס פְּנִימָה וְלִבְנוֹת חֲדָרִים!</p>
+      <div class="row"><button class="btn small" data-say>🔊 הַקְרֵא לִי</button><button class="btn ghost" data-close>סְגִירָה</button></div>`, (e) => {
+      if (e.target.closest('[data-say]')) App.speak(`${noEmoji(b.name)}. ${noEmoji(b.desc)}`);
+    });
+  }
 
   global.Town = Town;
 })(window);

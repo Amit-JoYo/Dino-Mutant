@@ -805,6 +805,30 @@
     sc.scrollTo({ left: x * u - sc.clientWidth / 2, top: y * u - sc.clientHeight / 2, behavior: smooth ? 'smooth' : 'auto' });
   }
 
+  /* Redraws lots and buildings; `fresh` is a lot that was just built on (plays the construction animation). */
+  function refreshTown(fresh) {
+    if (!state.on) return;
+    $('world-lots').innerHTML = T().mapHtml(fresh).lots;
+    $('world-mini').innerHTML = T().miniHtml();
+    updateMini();
+    const lot = T().LOTS[fresh];
+    if (!lot) return;
+    const sc = $('world-scroll');
+    const u = U();
+    const x = lot.x * u - sc.scrollLeft;
+    const y = (lot.y - 24) * u - sc.scrollTop;
+    if (x < 0 || x > sc.clientWidth || y < 0 || y > sc.clientHeight) scrollToPoint(lot.x, lot.y - 20, true);
+    setTimeout(() => {
+      state.sprites.forEach((s) => {
+        if (!s.busy && Math.hypot(s.x - lot.x, s.y - lot.y) < 90) say(s, pick(['🎉', '😮', '👏', '🤩']), 2400);
+      });
+    }, 2300);
+    setTimeout(() => {
+      const el = document.querySelector(`.w-bld[data-lot="${fresh}"]`);
+      if (el) el.classList.remove('rising');
+    }, 3200);
+  }
+
   function goHome(smooth) {
     $('world-scroll').scrollTo({ left: 0, top: 0, behavior: smooth ? 'smooth' : 'auto' });
   }
@@ -1025,5 +1049,5 @@
     window.addEventListener('resize', layout);
   }
 
-  global.World = { init, enter, leave, openWardrobe, isOn: () => state.on, Pets, FOODS, setNight: (v) => { state.forceNight = v; if (state.on) $('world').classList.toggle('night', isNight()); } };
+  global.World = { init, enter, leave, openWardrobe, refreshTown, isOn: () => state.on, Pets, FOODS, setNight: (v) => { state.forceNight = v; if (state.on) $('world').classList.toggle('night', isNight()); } };
 })(window);

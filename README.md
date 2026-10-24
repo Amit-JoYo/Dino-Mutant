@@ -11,7 +11,7 @@ No ads, no purchases, no accounts. Progress stays on the device (`localStorage`)
 - **Lab (מַעְבָּדָה):** procedural 2nd-grade math puzzles with full nikud: bridging 10, tens and units, missing addend, word problems, and word practice. Includes a drag-and-drop egg counting board and text-to-speech (he-IL).
 - **Reading (קְרִיאָה):** karaoke-style reading, word by word, with a highlighted active word, per-word and per-paragraph read-aloud, and an optional microphone check. Each paragraph earns DNA and a small dino upgrade; finishing a story unlocks that story's own legendary dino (shown on its card). Reading a finished story again earns a small daily bonus and an egg; eggs hatch after an hour into baby dinos that can be dressed, and a dino whose 3 babies have all hatched evolves into a "מֵגָה" form.
 - **Trail (מַסָּע):** a side-scrolling expedition with 3 obstacles per trip. Clear each with the dino's special ability or by solving a puzzle.
-- **World (הָעוֹלָם):** the whole herd lives on a big scrollable map: the meadow, plus a town with streets and building lots (building is coming soon). There's a mini-map and a 🏡 button to get back to the meadow. Dinos wander, eat, play, sleep, splash, visit each other and stroll into town, with day and night following the device clock. Tap a dino to feed, play, put to sleep, wash, hug, rename, or dress it. Needs decay slowly but never drop below a floor, so dinos get sad but never die.
+- **World (הָעוֹלָם):** the whole herd lives on a big scrollable map: the meadow, plus a town where she spends DNA to build a house, park, restaurant, farm, pool, school, library, hospital, mall, cinema, fire station and museum. Each building costs one short builder's maths question. There's a mini-map and a 🏡 button to get back to the meadow. Dinos wander, eat, play, sleep, splash, visit each other and stroll into town, with day and night following the device clock. Tap a dino to feed, play, put to sleep, wash, hug, rename, or dress it. Needs decay slowly but never drop below a floor, so dinos get sad but never die.
 - **Dress-up:** 63 items in 6 slots (hats, clothes, glasses, neck, back, tail), bought with DNA.
 - **My Park (הַגַּן שֶׁלִּי):** 15 dino species, each with a legendary version, plus a shop for new ones.
 - **Picture cards:** share a dino card or a progress card to WhatsApp as an image.
@@ -54,7 +54,8 @@ Add entries to `stories.json`. Each needs an `id`, a `title`, and either `text` 
 | `js/wardrobe.js` | Dress-up items and where they attach to each species |
 | `js/nursery.js` | Eggs, hatching, baby dinos and the Mega evolution |
 | `js/world.js` | The world map, pet care and the class view |
-| `js/town.js` | Town map layout (streets, lots, decorations, mini-map) and town save data |
+| `js/town.js` | Town map layout (streets, lots, decorations, mini-map), the build flow and town save data |
+| `js/town-data.js` | Building catalog (names, costs, looks) and the SVG building fronts |
 | `js/share.js` | WhatsApp picture cards (canvas to PNG) |
 | `js/cloud.js` | Class sharing: join, sync, classmates, reactions, gifts |
 | `js/social.js` | Reaction and gift screens |

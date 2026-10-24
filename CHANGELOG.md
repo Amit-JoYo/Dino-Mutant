@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-10-25: Dino Town, part 2: building
+
+### Added
+- **Build on the town lots with DNA.** Tap an open lot (🏗️) to see all 12 buildings: house 30, park 50, restaurant 60, farm 60, pool 70, school 80, library 80, hospital and vet 90, mall 100, cinema 110, fire station 120 and museum 150 DNA. Each one has its own front, a description with full nikud, and 🔊 read-aloud.
+- **The builder's question:** before the building goes up, the builder asks a short building-themed maths question (windows, bricks, paint buckets, floors). A wrong answer just tries again, with a hint after two tries. DNA is only paid once the question is answered, and she can go back without paying.
+- **Construction:** the building rises out of the ground with a crane and dust, nearby dinos cheer 🎉, and a celebration screen follows. Windows light up at night. Tapping a building shows its card. Going inside to build rooms comes next.
+- Each building is +3 ⭐ town stars (saved now; they will open more lots later). The mini-map shows buildings in their colours.
+- `js/town-data.js`: the building catalog and SVG fronts.
+
+### Changed
+- Service worker cache bumped to `v23`.
+
 ## 2026-10-25: Dino Town, part 1: the big map
 
 ### Added
