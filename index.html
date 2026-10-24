@@ -105,14 +105,22 @@
           <button class="chip" data-wm="class">🏫 הַכִּתָּה</button>
         </div>
         <div class="world" id="world" dir="ltr">
-          <div class="w-sky"><span class="w-sun"></span><span class="w-cloud c1">☁️</span><span class="w-cloud c2">☁️</span><span class="w-stars">✨</span></div>
-          <div class="w-hills"></div>
-          <div class="w-ground"></div>
-          <div class="w-pond"></div>
-          <div class="w-props" id="world-props"></div>
-          <div class="w-herd" id="world-herd"></div>
+          <div class="w-scroll" id="world-scroll">
+            <div class="w-map" id="world-map">
+              <div class="w-sky"><span class="w-sun"></span><span class="w-cloud c1">☁️</span><span class="w-cloud c2">☁️</span><span class="w-cloud c3">☁️</span><span class="w-cloud c4">☁️</span><span class="w-stars" id="world-stars"></span></div>
+              <div class="w-hills"></div>
+              <div class="w-ground"></div>
+              <div class="w-pond"></div>
+              <div class="w-roads" id="world-roads"></div>
+              <div class="w-lots" id="world-lots"></div>
+              <div class="w-props" id="world-props"></div>
+              <div class="w-herd" id="world-herd"></div>
+            </div>
+          </div>
+          <button class="w-home" id="world-home" aria-label="חֲזָרָה לַבַּיִת">🏡</button>
+          <div class="w-mini" id="world-mini" aria-hidden="true"></div>
         </div>
-        <p class="muted">לוֹחֲצִים עַל דִּינוֹזָאוּר כְּדֵי לְטַפֵּל בּוֹ: לְהַאֲכִיל, לְשַׂחֵק, לְהַשְׁכִּיב לִישֹׁן וְלְהַלְבִּישׁ! 💕</p>
+        <p class="muted">גּוֹלְלִים כְּדֵי לְטַיֵּל בָּעִיר 🗺️ וְלוֹחֲצִים עַל דִּינוֹזָאוּר כְּדֵי לְטַפֵּל בּוֹ! 💕</p>
       </div>
       <div class="card pet-card" id="pet-panel" hidden></div>
     </section>
@@ -153,6 +161,7 @@
   <script src="js/puzzles.js"></script>
   <script src="js/reading.js"></script>
   <script src="js/expedition.js"></script>
+  <script src="js/town.js"></script>
   <script src="js/world.js"></script>
   <script src="js/firebase-config.js"></script>
   <script src="js/fsrest.js"></script>

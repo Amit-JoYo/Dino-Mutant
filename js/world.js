@@ -171,12 +171,21 @@
   };
 
   const stageW = () => $('world').clientWidth || 320;
+  const U = () => stageW() / 100; // px per map unit
   const alive = (my) => state.on && my === state.token;
   const ok = (s, my) => alive(my) && !s.busy;
 
+  // Width in map units.
   function widthFor(s, y) {
     const depth = clamp((y - 52) / 42, 0, 1);
-    return stageW() * 0.24 * (0.7 + 0.4 * depth) * (SIZE[s.d.species] || 1) * (s.d.baby ? 0.5 : 1);
+    return 24 * (0.7 + 0.4 * depth) * (SIZE[s.d.species] || 1) * (s.d.baby ? 0.5 : 1);
+  }
+
+  function place(s, x, y, depthY) {
+    s.el.style.left = `calc(var(--u) * ${x.toFixed(2)})`;
+    s.el.style.top = `calc(var(--u) * ${y.toFixed(2)})`;
+    s.el.style.width = `calc(var(--u) * ${widthFor(s, depthY === undefined ? y : depthY).toFixed(2)})`;
+    s.el.style.zIndex = Math.round(y * 10);
   }
 
   function landPoint() {
@@ -190,14 +199,41 @@
 
   const pondPoint = () => ({ x: rnd(POND.x0, POND.x1), y: rnd(POND.y0, POND.y1) });
   const isSwimmer = (s) => s.d.species === 'plesio';
+  const T = () => global.Town;
+  const inMeadow = (s) => T().inMeadow(s.x, s.y);
+
+  /* A spot a few steps away: inside the meadow when there, anywhere on the town grass otherwise. */
+  function nearby(s, rx, ry) {
+    const p = { x: s.x + rnd(-rx, rx), y: s.y + rnd(-ry, ry) };
+    if (inMeadow(s)) {
+      p.x = clamp(p.x, 8, 92);
+      p.y = clamp(p.y, 60, 93);
+      if (p.x > 50 && p.y < 76) p.y = 80;
+      return p;
+    }
+    return T().clampToMap(p);
+  }
 
   function buildScene() {
     const world = $('world');
-    world.style.setProperty('--u', `${stageW() / 100}px`);
+    const { MAP } = T();
+    world.style.setProperty('--u', `${U()}px`);
     world.classList.toggle('night', isNight());
+    const map = $('world-map');
+    map.style.setProperty('--mw', MAP.w);
+    map.style.setProperty('--mh', MAP.h);
+    const town = T().mapHtml();
+    $('world-roads').innerHTML = town.roads;
+    $('world-lots').innerHTML = town.lots;
     $('world-props').innerHTML = PROPS.map((p) =>
-      `<span class="w-prop-item${p.far ? ' far' : ''}" style="left:${p.x}%;top:${p.y}%;font-size:calc(var(--u)*${p.k});z-index:${p.far ? 0 : Math.round(p.y * 10)}">${p.e}</span>`
-    ).join('');
+      `<span class="w-prop-item${p.far ? ' far' : ''}" style="left:calc(var(--u)*${p.x});top:calc(var(--u)*${p.y});font-size:calc(var(--u)*${p.k});z-index:${p.far ? 0 : Math.round(p.y * 10)}">${p.e}</span>`
+    ).join('') + town.decor;
+    if (!$('world-stars').childElementCount) {
+      let stars = '';
+      for (let i = 0; i < 40; i++) stars += `<i style="left:${rnd(1, 99).toFixed(1)}%;top:${rnd(4, 70).toFixed(1)}%">✨</i>`;
+      $('world-stars').innerHTML = stars;
+    }
+    $('world-mini').innerHTML = T().miniHtml();
   }
 
   function makeSprite(d) {
@@ -210,10 +246,7 @@
     const p = isSwimmer(s) ? pondPoint() : landPoint();
     s.x = p.x;
     s.y = p.y;
-    el.style.left = `${p.x}%`;
-    el.style.top = `${p.y}%`;
-    el.style.width = `${widthFor(s, p.y)}px`;
-    el.style.zIndex = Math.round(p.y * 10);
+    place(s, p.x, p.y);
     if (Math.random() < 0.5) el.classList.add('left');
     return s;
   }
@@ -243,18 +276,13 @@
   function moveTo(s, x, y, o) {
     o = o || {};
     const my = state.token;
-    const W = stageW();
-    const H = $('world').clientHeight;
-    const dx = ((x - s.x) / 100) * W;
-    const dy = ((y - s.y) / 100) * H;
-    const speed = o.speed || (o.air ? 60 : isSwimmer(s) ? 24 : 38);
+    const dx = x - s.x;
+    const dy = y - s.y;
+    const speed = o.speed || (o.air ? 17 : isSwimmer(s) ? 7 : 11); // map units per second
     const dur = Math.max(0.3, Math.hypot(dx, dy) / speed);
     s.el.style.transitionDuration = `${dur}s`;
-    s.el.style.left = `${x}%`;
-    s.el.style.top = `${y}%`;
-    s.el.style.width = `${widthFor(s, o.depthY === undefined ? y : o.depthY)}px`;
-    s.el.style.zIndex = Math.round(y * 10);
-    if (Math.abs(dx) > 3) s.el.classList.toggle('left', dx < 0);
+    place(s, x, y, o.depthY);
+    if (Math.abs(dx) > 1) s.el.classList.toggle('left', dx < 0);
     s.el.classList.toggle('flying', !!o.air);
     s.el.classList.add('walking');
     s.x = x;
@@ -267,14 +295,15 @@
   /* Stop exactly where the sprite is right now (used when it is picked for care). */
   function freeze(s) {
     const r = s.el.getBoundingClientRect();
-    const sr = $('world').getBoundingClientRect();
-    if (sr.width) {
-      s.x = ((r.left + r.width / 2 - sr.left) / sr.width) * 100;
-      s.y = ((r.bottom - sr.top) / sr.height) * 100;
+    const mr = $('world-map').getBoundingClientRect();
+    const u = U();
+    if (mr.width && u) {
+      s.x = (r.left + r.width / 2 - mr.left) / u;
+      s.y = (r.bottom - mr.top) / u;
     }
     s.el.style.transitionDuration = '0s';
-    s.el.style.left = `${s.x}%`;
-    s.el.style.top = `${s.y}%`;
+    s.el.style.left = `calc(var(--u) * ${s.x.toFixed(2)})`;
+    s.el.style.top = `calc(var(--u) * ${s.y.toFixed(2)})`;
     s.el.classList.remove('walking');
     s.actId++;
   }
@@ -303,8 +332,17 @@
     },
 
     async fly(s, my) {
-      await moveTo(s, rnd(10, 90), rnd(26, 50), { air: true, depthY: 66 });
+      await moveTo(s, clamp(s.x + rnd(-45, 45), 10, T().MAP.w - 10), rnd(26, 50), { air: true, depthY: 66 });
       if (ok(s, my)) await wait(rnd(500, 1800));
+    },
+
+    async stroll(s, my) {
+      const p = T().strollPoint();
+      await moveTo(s, p.x, p.y, { speed: 14 });
+      if (ok(s, my)) {
+        say(s, pick(['😮', '🏙️', '👀', '😊']), 2000);
+        await wait(rnd(1500, 3500));
+      }
     },
 
     async eat(s, my, id) {
@@ -319,8 +357,7 @@
     },
 
     async play(s, my, id) {
-      const p = isSwimmer(s) ? pondPoint() : { x: clamp(s.x + rnd(-14, 14), 8, 92), y: clamp(s.y + rnd(-6, 6), 60, 93) };
-      if (!isSwimmer(s) && p.x > 50 && p.y < 76) p.y = 80;
+      const p = isSwimmer(s) ? pondPoint() : nearby(s, 14, 6);
       await moveTo(s, p.x, p.y);
       if (ok(s, my)) await doing(s, my, id, 'playing', isSwimmer(s) ? '💦' : '⚽', rnd(4000, 6000), 'fun', 6);
     },
@@ -343,8 +380,10 @@
       const others = [...state.sprites.values()].filter((o) => o !== s && !o.busy && !isSwimmer(o) && o.state !== 'sleeping');
       if (!others.length) return ACTS.wander(s, my);
       const o = pick(others);
-      const side = o.x > 50 ? -1 : 1;
-      await moveTo(s, clamp(o.x + side * 9, 8, 92), clamp(o.y + 1, 60, 93));
+      const side = o.x > s.x ? -1 : 1;
+      const p = T().clampToMap({ x: o.x + side * 9, y: o.y + 1 });
+      if (T().inMeadow(o.x, o.y) && p.x > 50 && p.y < 76) p.y = 78;
+      await moveTo(s, p.x, p.y);
       if (!ok(s, my)) return;
       s.el.classList.toggle('left', side > 0);
       say(s, pick(['❤️', '😊', '💬']), 2400);
@@ -360,9 +399,12 @@
     const w = { wander: 3, eat: 1 + (p.food < 40 ? 4 : 0), play: 1 + (p.fun < 40 ? 4 : 0), sleep: 0.4 + (p.rest < 35 ? 5 : 0) + (night ? 2.5 : 0), splash: 0.7 + (p.clean < 40 ? 4 : 0) };
     if (species === 'ptero') w.fly = 4;
     if (!isSwimmer(s) && state.sprites.size > 1) w.visit = 1.5;
+    if (!isSwimmer(s) && state.mode === 'mine') w.stroll = inMeadow(s) ? 0.8 : 0.6;
+    if (!inMeadow(s)) w.wander = 2.2; // wandering always leads back home to the meadow
     if (night) {
       w.wander = 1.5;
       w.play *= 0.5;
+      if (w.stroll) w.stroll *= 0.3;
     }
     const total = Object.values(w).reduce((a, b) => a + b, 0);
     let r = Math.random() * total;
@@ -376,6 +418,7 @@
   /* Babies stay close to their parent: wander around it, hop about, and curl up when the parent sleeps. */
   function nearParent(par, s) {
     if (isSwimmer(s)) return { x: clamp(par.x + rnd(-6, 6), POND.x0, POND.x1), y: clamp(par.y + rnd(-1, 2), POND.y0, POND.y1) };
+    if (!T().inMeadow(par.x, par.y)) return T().clampToMap({ x: par.x + rnd(-11, 11), y: par.y + rnd(-2, 5) });
     const p = { x: clamp(par.x + rnd(-11, 11), 6, 94), y: clamp(par.y + rnd(-2, 5), 58, 94) };
     if (p.x > 50 && p.y < 76) p.y = 78;
     return p;
@@ -721,10 +764,89 @@
   /* ------------------------------------------------------------------ lifecycle */
   function layout() {
     if (!state.on) return;
-    $('world').style.setProperty('--u', `${stageW() / 100}px`);
+    $('world').style.setProperty('--u', `${U()}px`);
+    updateMini();
+  }
+
+  /* ------------------------------------------------------------------ map: panning and mini-map */
+  function updateMini() {
+    const sc = $('world-scroll');
+    const view = $('mm-view');
+    if (!sc || !view) return;
+    const { MAP } = T();
+    const u = U();
+    view.style.left = `${(sc.scrollLeft / u / MAP.w) * 100}%`;
+    view.style.top = `${(sc.scrollTop / u / MAP.h) * 100}%`;
+    view.style.width = `${(sc.clientWidth / u / MAP.w) * 100}%`;
+    view.style.height = `${(sc.clientHeight / u / MAP.h) * 100}%`;
+  }
+
+  function updateDots() {
+    const box = $('mm-dots');
+    if (!box) return;
+    const { MAP } = T();
+    const mr = $('world-map').getBoundingClientRect();
+    const u = U();
+    let html = '';
     state.sprites.forEach((s) => {
-      if (!s.el.classList.contains('walking')) s.el.style.width = `${widthFor(s, s.el.classList.contains('flying') ? 66 : s.y)}px`;
+      if (s.d.baby) return;
+      const r = s.el.getBoundingClientRect();
+      const x = (r.left + r.width / 2 - mr.left) / u;
+      const y = (r.bottom - mr.top) / u;
+      html += `<i style="left:${((x / MAP.w) * 100).toFixed(1)}%;top:${((y / MAP.h) * 100).toFixed(1)}%"></i>`;
     });
+    box.innerHTML = html;
+  }
+
+  /* Centers the view on a map point (map units). */
+  function scrollToPoint(x, y, smooth) {
+    const sc = $('world-scroll');
+    const u = U();
+    sc.scrollTo({ left: x * u - sc.clientWidth / 2, top: y * u - sc.clientHeight / 2, behavior: smooth ? 'smooth' : 'auto' });
+  }
+
+  function goHome(smooth) {
+    $('world-scroll').scrollTo({ left: 0, top: 0, behavior: smooth ? 'smooth' : 'auto' });
+  }
+
+  function onMiniClick(e) {
+    const r = $('world-mini').getBoundingClientRect();
+    const { MAP } = T();
+    scrollToPoint(((e.clientX - r.left) / r.width) * MAP.w, ((e.clientY - r.top) / r.height) * MAP.h, true);
+  }
+
+  /* Touch scrolls natively; a mouse drags the map. A drag never counts as a tap on a dino or lot. */
+  function initDrag() {
+    const sc = $('world-scroll');
+    let drag = null;
+    sc.addEventListener('pointerdown', (e) => {
+      if (e.pointerType !== 'mouse' || e.button !== 0) return;
+      drag = { x: e.clientX, y: e.clientY, l: sc.scrollLeft, t: sc.scrollTop, moved: false };
+    });
+    window.addEventListener('pointermove', (e) => {
+      if (!drag) return;
+      const dx = e.clientX - drag.x;
+      const dy = e.clientY - drag.y;
+      if (!drag.moved && Math.hypot(dx, dy) < 6) return;
+      drag.moved = true;
+      sc.classList.add('dragging');
+      sc.scrollLeft = drag.l - dx;
+      sc.scrollTop = drag.t - dy;
+    });
+    window.addEventListener('pointerup', () => {
+      if (!drag) return;
+      if (drag.moved) {
+        sc.classList.remove('dragging');
+        const stop = (ev) => { ev.stopPropagation(); ev.preventDefault(); };
+        sc.addEventListener('click', stop, { capture: true, once: true });
+        setTimeout(() => sc.removeEventListener('click', stop, { capture: true }), 0);
+      }
+      drag = null;
+    });
+    sc.addEventListener('scroll', () => {
+      state.scroll = { l: sc.scrollLeft / U(), t: sc.scrollTop / U() };
+      updateMini();
+    }, { passive: true });
   }
 
   function periodic() {
@@ -820,6 +942,12 @@
     $('world-herd').innerHTML = '';
     buildScene();
     showTabs();
+    requestAnimationFrame(() => {
+      if (!alive(my)) return;
+      if (state.scroll) $('world-scroll').scrollTo(state.scroll.l * U(), state.scroll.t * U());
+      updateMini();
+    });
+    state.dotsT = setInterval(updateDots, 1000);
     $('pet-panel').hidden = true;
     state.sel = null;
     state.interval = setInterval(periodic, 30000);
@@ -851,10 +979,7 @@
         const p = nearParent(par, s);
         s.x = p.x;
         s.y = p.y;
-        s.el.style.left = `${p.x}%`;
-        s.el.style.top = `${p.y}%`;
-        s.el.style.width = `${widthFor(s, p.y)}px`;
-        s.el.style.zIndex = Math.round(p.y * 10);
+        place(s, p.x, p.y);
         state.sprites.set(String(bd.uid), s);
         $('world-herd').appendChild(s.el);
         babyCount++;
@@ -872,6 +997,7 @@
     clearInterval(state.interval);
     clearInterval(state.refreshT);
     clearInterval(state.incomingT);
+    clearInterval(state.dotsT);
     state.sel = null;
     state.lock = false;
     if ($('pet-panel')) $('pet-panel').hidden = true;
@@ -882,6 +1008,13 @@
       const el = e.target.closest('.w-dino');
       if (el) select(el.dataset.uid);
     });
+    $('world-lots').addEventListener('click', (e) => {
+      const lot = e.target.closest('[data-lot]');
+      if (lot) T().onLot(Number(lot.dataset.lot));
+    });
+    $('world-home').addEventListener('click', () => goHome(true));
+    $('world-mini').addEventListener('click', onMiniClick);
+    initDrag();
     $('world-tabs').addEventListener('click', (e) => {
       const b = e.target.closest('[data-wm]');
       if (!b || b.dataset.wm === state.mode) return;

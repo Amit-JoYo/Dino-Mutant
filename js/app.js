@@ -26,6 +26,7 @@
       trips: 0,
       wardrobe: [],
       cloud: { on: false, code: '', className: '', name: '', locked: false, showcase: [], seen: 0, lastGiftDay: '' },
+      town: null,
     };
   }
 
@@ -44,6 +45,7 @@
     s.wardrobe = Array.from(new Set((Array.isArray(s.wardrobe) ? s.wardrobe : []).concat(global.Wardrobe.STARTERS)));
     s.cloud = Object.assign(defaults().cloud, s.cloud || {});
     if (!Array.isArray(s.cloud.showcase)) s.cloud.showcase = [];
+    global.Town.migrate(s);
     s.seeded = true; // sample stories now come from stories.json, not local storage
     return s;
   }

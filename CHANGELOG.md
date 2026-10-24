@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-10-25: Dino Town, part 1: the big map
+
+### Added
+- **A much bigger World:** the meadow is now the top-left corner of a map about 4 screens wide and 3 screens tall. Swipe to scroll on a phone, or drag with the mouse on a computer. The map has streets, trees and flowers, and 22 building lots: 6 are open (🏗️) and the rest are locked (🔒) until later. Building on them comes in the next update; for now, tapping a lot just shows a "coming soon" message.
+- A **mini-map** in the corner shows where the dinos are and which part of the map is on screen. Tap it to jump there. The 🏡 button goes back to the meadow.
+- Dinos sometimes stroll into town to look around, then wander back home to the meadow.
+- `js/town.js`: map layout and the new `town` save data (stars, open lots, buildings). Old saves get it automatically.
+
+### Changed
+- Positions in the World use map units instead of screen percentages, and the World is a bit taller on phones.
+- Service worker cache bumped to `v22`.
+
 ## 2026-10-21: 11 new stories and 5 new dinos
 
 ### Added
