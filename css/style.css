@@ -292,12 +292,13 @@ main { max-width: 720px; margin: 0 auto; padding: 12px; }
 .w-map > * { position: absolute; }
 .w-sky { left: 0; right: 0; top: 0; height: calc(var(--u, 3px) * 50); background: linear-gradient(180deg, #7cc8ff, #dff3ff); transition: background 1s; }
 .w-sun { position: absolute; left: calc(var(--u, 3px) * 77); top: calc(var(--u, 3px) * 6); width: calc(var(--u, 3px) * 13); aspect-ratio: 1; border-radius: 50%; background: #ffe066; box-shadow: 0 0 24px 8px rgba(255, 224, 102, .7); transition: background 1s, box-shadow 1s; }
-.w-cloud { position: absolute; font-size: calc(var(--u, 3px) * 14); opacity: .9; animation: drift 70s ease-in-out infinite alternate; }
+.w-cloud { position: absolute; font-size: calc(var(--u, 3px) * 14); opacity: .9; animation: drift 70s ease-in-out infinite alternate; will-change: transform; }
 .w-cloud.c1 { top: calc(var(--u, 3px) * 6); left: calc(var(--u, 3px) * 4); }
 .w-cloud.c2 { top: calc(var(--u, 3px) * 22); left: calc(var(--u, 3px) * 120); animation-duration: 90s; font-size: calc(var(--u, 3px) * 9); }
 .w-cloud.c3 { top: calc(var(--u, 3px) * 10); left: calc(var(--u, 3px) * 220); animation-duration: 80s; animation-direction: alternate-reverse; }
 .w-cloud.c4 { top: calc(var(--u, 3px) * 26); left: calc(var(--u, 3px) * 310); animation-duration: 100s; font-size: calc(var(--u, 3px) * 10); }
-@keyframes drift { to { transform: translateX(calc(var(--u, 3px) * 70)); } }
+/* No var() inside: keyframes with var() can't run on the GPU. 400% of the cloud's own width ≈ 70 map units. */
+@keyframes drift { to { transform: translateX(400%); } }
 .w-stars { position: absolute; inset: 0; opacity: 0; font-size: calc(var(--u, 3px) * 4); transition: opacity 1s; }
 .w-stars i { position: absolute; font-style: normal; }
 .w-hills { left: 0; right: 0; top: calc(var(--u, 3px) * 30); height: calc(var(--u, 3px) * 24); background: radial-gradient(ellipse 9% 100% at 5% 100%, #86cf86 99%, transparent 100%), radial-gradient(ellipse 10% 90% at 17.5% 100%, #9bd88f 99%, transparent 100%), radial-gradient(ellipse 12% 80% at 42% 100%, #86cf86 99%, transparent 100%), radial-gradient(ellipse 10% 95% at 66% 100%, #9bd88f 99%, transparent 100%), radial-gradient(ellipse 11% 85% at 90% 100%, #86cf86 99%, transparent 100%); }
@@ -496,7 +497,27 @@ button.tf-coin { width: 58px; height: 58px; font-size: 1.3rem; }
 .world.night .w-stars { opacity: .9; }
 .world.night::after { content: ''; position: absolute; inset: 0; background: rgba(12, 20, 70, .3); pointer-events: none; z-index: 5000; }
 
-.w-dino { position: absolute; transform: translate(-50%, -100%); transition-property: left, top, width; transition-timing-function: linear; cursor: pointer; touch-action: manipulation; }
+/* Map dinos move with a GPU transform (set in world.js) and animate as a whole. Their inner SVG parts stay still:
+   with many dinos on the big map, per-part animations made the phone redraw everything every frame. */
+.w-dino { position: absolute; left: 0; top: 0; transform-origin: 0 0; transition-property: transform; transition-timing-function: linear; will-change: transform; cursor: pointer; touch-action: manipulation; }
+.w-dino .dino-svg, .w-dino .dino-svg * { animation: none !important; }
+.w-bob { transform-origin: 50% 100%; animation: breathe 2.6s ease-in-out infinite; }
+.w-dino:nth-child(3n) .w-bob { animation-delay: -.9s; }
+.w-dino:nth-child(3n+1) .w-bob { animation-delay: -1.7s; }
+.w-dino.walking .w-bob { animation: waddle .5s ease-in-out infinite; }
+.w-dino.flying .w-bob { animation: glide 1.1s ease-in-out infinite; }
+.w-dino.eating .w-bob { animation: chomp .4s ease-in-out infinite; }
+.w-dino.playing .w-bob, .w-dino.splashing .w-bob { animation: hop .7s ease-in-out infinite; }
+.w-dino.washing .w-bob { animation: scrub .3s linear infinite; }
+.w-dino.hugging .w-bob { animation: squish 1s ease-in-out infinite; }
+.w-dino.sleeping .w-bob { animation: breathe 5s ease-in-out infinite; }
+@keyframes waddle { 0%, 100% { transform: rotate(-3deg); } 50% { transform: translateY(-5%) rotate(3deg); } }
+@keyframes glide { 50% { transform: translateY(-6%) rotate(-2deg); } }
+@keyframes chomp { 50% { transform: rotate(4deg) scaleY(.96); } }
+.w-dino.going-in { opacity: 0; transition: transform .5s, opacity .5s !important; }
+.world.asleep *, .world.asleep *::before, .world.asleep *::after { animation-play-state: paused !important; }
+/* Fewer running animations means less work whenever anything on the map changes. */
+.w-badge:empty, .w-prop:empty, .w-dino.off .w-bob, .w-dino.off .w-badge, .w-dino.off .w-prop { animation: none !important; }
 .w-dino.flying .rig-shadow { display: none; }
 .w-flip { transition: transform .25s; }
 .w-dino.left .w-flip { transform: scaleX(-1); }

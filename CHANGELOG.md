@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-10-27: Smoother World on phones
+
+The World got slow after Dino Town, because every small dino animation made the browser recalculate the whole big map. On a simulated slow phone (CPU slowed 4×) with 15 dinos, 12 babies, 12 buildings and 30 decorations, it went from 9 to about 80 frames per second in the meadow, and from about 9 to about 140 in town.
+
+### Changed
+- **Dinos on the map move with GPU transforms** instead of changing their position and size, so walking no longer makes the browser redo the page layout. Their depth size is a scale.
+- **Map dinos animate as a whole:** they breathe, waddle when walking, glide when flying, chomp when eating, hop when playing, scrub, squish and snooze. Their inner parts (tail, head, legs, sparkles) stay still on the map. The care panel, Lab, Park and the inside of buildings still show the full animated dinos.
+- **The world pauses** (animations and walks) while a building's inside view covers it, and while the app is in the background.
+- **Dinos scrolled out of view** stop their idle animation; empty need badges no longer pulse.
+- **Clouds** move on the GPU (their animation used a CSS variable, which kept it on the main thread).
+- **The mini-map dots** use the dinos' known positions instead of measuring every dino each second.
+- Service worker cache bumped to `v27`.
+
 ## 2026-10-25: Dino Town, part 5: stars, decorations and what each building does
 
 ### Added

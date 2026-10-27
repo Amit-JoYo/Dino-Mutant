@@ -179,17 +179,16 @@
   const alive = (my) => state.on && my === state.token;
   const ok = (s, my) => alive(my) && !s.busy;
 
-  // Width in map units.
-  function widthFor(s, y) {
-    const depth = clamp((y - 52) / 42, 0, 1);
-    return 24 * (0.7 + 0.4 * depth) * (SIZE[s.d.species] || 1) * (s.d.baby ? 0.5 : 1);
-  }
+  // Size in map units: the base width never changes; depth is a GPU scale so walking needs no layout.
+  const baseW = (s) => 24 * (SIZE[s.d.species] || 1) * (s.d.baby ? 0.5 : 1);
+  const depthScale = (y) => 0.7 + 0.4 * clamp((y - 52) / 42, 0, 1);
 
+  /* Positions a sprite with a transform only (composited), so moving dinos don't make the browser re-layout the map. */
   function place(s, x, y, depthY) {
-    s.el.style.left = `calc(var(--u) * ${x.toFixed(2)})`;
-    s.el.style.top = `calc(var(--u) * ${y.toFixed(2)})`;
-    s.el.style.width = `calc(var(--u) * ${widthFor(s, depthY === undefined ? y : depthY).toFixed(2)})`;
+    const u = U();
+    s.el.style.transform = `translate3d(${(x * u).toFixed(1)}px, ${(y * u).toFixed(1)}px, 0) scale(${depthScale(depthY === undefined ? y : depthY).toFixed(3)}) translate(-50%, -100%)`;
     s.el.style.zIndex = Math.round(y * 10);
+    s.depthY = depthY;
   }
 
   function landPoint() {
@@ -241,13 +240,33 @@
     $('world-mini').innerHTML = T().miniHtml();
   }
 
+  /* Dinos scrolled out of view stop their idle animation (marked .off). */
+  let seen = null;
+  function watch(el) {
+    if (!('IntersectionObserver' in global)) return;
+    if (!seen) {
+      seen = new IntersectionObserver((entries) => {
+        entries.forEach((e) => e.target.classList.toggle('off', !e.isIntersecting));
+      }, { root: $('world-scroll'), rootMargin: '25%' });
+    }
+    seen.observe(el);
+  }
+
+  function clearHerd() {
+    if (seen) seen.disconnect();
+    $('world-herd').innerHTML = '';
+  }
+
   function makeSprite(d) {
     const el = document.createElement('div');
     el.className = 'w-dino';
+    watch(el);
     el.dataset.uid = d.uid;
-    el.innerHTML = `<div class="w-shadow"></div><div class="w-flip">${global.App.dinoHtml(d)}</div><div class="w-prop"></div><div class="w-bubble"></div><div class="w-badge"></div><div class="w-name"></div>`;
+    el.innerHTML = `<div class="w-shadow"></div><div class="w-flip"><div class="w-bob">${global.App.dinoHtml(d)}</div></div><div class="w-prop"></div><div class="w-bubble"></div><div class="w-badge"></div><div class="w-name"></div>`;
     if (d.visitor) el.querySelector('.w-name').textContent = d.owner;
     const s = { d, el, x: 0, y: 0, busy: false, actId: 0, state: '' };
+    el.style.width = `calc(var(--u) * ${baseW(s).toFixed(2)})`;
+    el.style.transitionDuration = '0s';
     const p = isSwimmer(s) ? pondPoint() : landPoint();
     s.x = p.x;
     s.y = p.y;
@@ -307,8 +326,7 @@
       s.y = (r.bottom - mr.top) / u;
     }
     s.el.style.transitionDuration = '0s';
-    s.el.style.left = `calc(var(--u) * ${s.x.toFixed(2)})`;
-    s.el.style.top = `calc(var(--u) * ${s.y.toFixed(2)})`;
+    place(s, s.x, s.y, s.el.classList.contains('flying') ? 66 : undefined);
     s.el.classList.remove('walking');
     s.actId++;
   }
@@ -433,7 +451,7 @@
     await wait(rnd(300, 1500));
     while (alive(my)) {
       if (state.sprites.get(String(s.d.uid)) !== s) return; // went into a building
-      if (s.busy) {
+      if (s.busy || state.paused) {
         await wait(400);
         continue;
       }
@@ -466,7 +484,7 @@
     await wait(rnd(200, 2800));
     while (alive(my)) {
       if (state.sprites.get(String(s.d.uid)) !== s) return; // went into a building
-      if (s.busy) {
+      if (s.busy || state.paused) {
         await wait(400);
         continue;
       }
@@ -602,7 +620,7 @@
   }
 
   function refreshSprite(s) {
-    s.el.querySelector('.w-flip').innerHTML = global.App.dinoHtml(s.d);
+    s.el.querySelector('.w-bob').innerHTML = global.App.dinoHtml(s.d);
   }
 
   /* Guest dinos only react: nothing is saved and no DNA is earned. */
@@ -775,6 +793,11 @@
   function layout() {
     if (!state.on) return;
     $('world').style.setProperty('--u', `${U()}px`);
+    // Positions are in pixels now, so a new frame width needs every sprite placed again.
+    state.sprites.forEach((s) => {
+      s.el.style.transitionDuration = '0s';
+      place(s, s.x, s.y, s.depthY);
+    });
     updateMini();
   }
 
@@ -791,21 +814,20 @@
     view.style.height = `${(sc.clientHeight / u / MAP.h) * 100}%`;
   }
 
+  /* Dots show where each dino is heading (no layout reads, so this stays cheap). Skipped when nothing moved. */
   function updateDots() {
     const box = $('mm-dots');
-    if (!box) return;
+    if (!box || state.paused) return;
     const { MAP } = T();
-    const mr = $('world-map').getBoundingClientRect();
-    const u = U();
     let html = '';
     state.sprites.forEach((s) => {
       if (s.d.baby) return;
-      const r = s.el.getBoundingClientRect();
-      const x = (r.left + r.width / 2 - mr.left) / u;
-      const y = (r.bottom - mr.top) / u;
-      html += `<i style="left:${((x / MAP.w) * 100).toFixed(1)}%;top:${((y / MAP.h) * 100).toFixed(1)}%"></i>`;
+      html += `<i style="left:${((s.x / MAP.w) * 100).toFixed(1)}%;top:${((s.y / MAP.h) * 100).toFixed(1)}%"></i>`;
     });
-    box.innerHTML = html;
+    if (html !== box.dataset.sig) {
+      box.dataset.sig = html;
+      box.innerHTML = html;
+    }
   }
 
   /* Centers the view on a map point (map units). */
@@ -999,7 +1021,7 @@
 
   function mountVisitors(list, my) {
     state.sprites.clear();
-    $('world-herd').innerHTML = '';
+    clearHerd();
     visitorDinos(list).forEach((v, i) => {
       const d = Object.assign({ uid: i + 1, visitor: true }, v);
       const s = makeSprite(d);
@@ -1053,7 +1075,7 @@
     state.on = true;
     const my = ++state.token;
     state.sprites.clear();
-    $('world-herd').innerHTML = '';
+    clearHerd();
     buildScene();
     showTabs();
     requestAnimationFrame(() => {
@@ -1138,7 +1160,7 @@
       state.sprites.delete(String(s.d.uid));
       moveTo(s, L.x + rnd(-3, 3), L.y + 2, { speed: 18 }).then(() => {
         s.el.classList.add('going-in');
-        setTimeout(() => s.el.remove(), 600);
+        setTimeout(() => { if (seen) seen.unobserve(s.el); s.el.remove(); }, 600);
       });
     });
     updateCount();
@@ -1179,7 +1201,18 @@
     if ($('pet-panel')) $('pet-panel').hidden = true;
   }
 
+  /* Freezes the map (animations and dino walks) while something covers it, or the app is in the background. */
+  const pauseReasons = new Set();
+  function setPaused(reason, on) {
+    if (on) pauseReasons.add(reason);
+    else pauseReasons.delete(reason);
+    state.paused = pauseReasons.size > 0;
+    const w = $('world');
+    if (w) w.classList.toggle('asleep', state.paused);
+  }
+
   function init() {
+    document.addEventListener('visibilitychange', () => setPaused('hidden', document.hidden));
     $('world-herd').addEventListener('click', (e) => {
       const el = e.target.closest('.w-dino');
       if (el) select(el.dataset.uid);
@@ -1204,5 +1237,5 @@
     window.addEventListener('resize', layout);
   }
 
-  global.World = { init, enter, leave, openWardrobe, refreshTown, dinoToBuilding, dinoFromBuilding, isOn: () => state.on, Pets, FOODS, setNight: (v) => { state.forceNight = v; if (state.on) $('world').classList.toggle('night', isNight()); } };
+  global.World = { init, enter, leave, openWardrobe, refreshTown, dinoToBuilding, dinoFromBuilding, setPaused, isOn: () => state.on, Pets, FOODS, setNight: (v) => { state.forceNight = v; if (state.on) $('world').classList.toggle('night', isNight()); } };
 })(window);

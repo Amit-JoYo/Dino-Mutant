@@ -120,6 +120,7 @@
     st.fresh = -1;
     el.hidden = false;
     document.body.classList.add('ti-open');
+    if (global.World.setPaused) global.World.setPaused('inside', true);
     render();
   }
 
@@ -128,6 +129,7 @@
     if (el) el.hidden = true;
     document.body.classList.remove('ti-open');
     st.lot = -1;
+    if (global.World && global.World.setPaused) global.World.setPaused('inside', false);
     if (global.World && global.World.refreshTown) global.World.refreshTown();
   }
 

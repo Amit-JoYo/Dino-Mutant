@@ -24,6 +24,17 @@ Before adding more, watch her play for a few days and note:
 - **Map feel:** size, scrolling, and whether anything is too small to tap.
 - **Speed on older phones** with many buildings, decorations and dinos. Only dinos outside are drawn on the map, but every room card draws SVG dinos.
 
+## Performance rules for the World map
+
+Learned while fixing the slowdown in October 2026 (9 → ~80 fps on a simulated slow phone). Keep these when adding things to the map:
+
+- **Never animate inside a map dino's SVG.** Each moving part makes the browser redo style, paint and layer work for the whole map every frame. Map dinos animate the `.w-bob` wrapper as a whole (`breathe`, `waddle`, `hop`…), and `.w-dino .dino-svg *` has `animation: none`.
+- **Move sprites with `transform` only** (`place()` in `world.js`), never `left`/`top`/`width`. The size for depth is a `scale()`.
+- **No `var()` inside `@keyframes`.** It keeps the animation on the main thread (that was the clouds' problem).
+- **Don't read layout in timers** (`getBoundingClientRect` every second). Use the known `s.x`/`s.y`.
+- **Fewer running animations is better:** off-screen dinos get `.off`, empty badges don't pulse, and the world gets `.asleep` (all animations paused) when covered or in the background (`World.setPaused`).
+- To measure: Chrome DevTools → Performance with CPU throttling 4× and a big save (15 dinos with babies, 12 buildings, 30 decorations). Look at frames per second and at "Recalculate style", "Layerize" and "Commit".
+
 ## Ideas for later
 
 Each one stands alone, roughly in order of fun for effort.
