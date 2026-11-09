@@ -308,6 +308,11 @@
     const rereading = pr.done;
     const lastPar = parIdx === paragraphs.length - 1;
     const first = !pr.done && parIdx >= pr.rewarded;
+    // An old cached app doesn't know this story's dino yet: don't finish the story (and lose the prize), ask to reload.
+    if (lastPar && !pr.done && story.legend && !global.Renderer.SPECIES[story.legend]) {
+      App.toast('הַסִּפּוּר הַזֶּה צָרִיךְ גִּרְסָה חֲדָשָׁה. סִגְרִי וּפִתְחִי אֶת הָאֶפְלִיקַצְיָה וְנַסִּי שׁוּב 🔄');
+      return;
+    }
     const dnaGain = first ? 10 : 0;
     let update = null;
     let reread = null;

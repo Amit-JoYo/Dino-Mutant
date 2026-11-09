@@ -10,6 +10,19 @@
   const LEGEND_ORDER = ['trex', 'brachio', 'trike', 'ptero', 'stego', 'anky', 'raptor', 'para', 'spino', 'plesio', 'compy', 'igua', 'diplo', 'dilo', 'pachy', 'ovi'];
   const MUTATE_COST = 10;
 
+  /* Stories whose legendary was lost when they were finished on an old cached copy of the app that did not know the species yet. */
+  const LEGEND_REPAIR = { 'story-cricket-ant': 'ovi' };
+
+  function repairLegends(s) {
+    for (const [id, species] of Object.entries(LEGEND_REPAIR)) {
+      if (!s.progress[id] || !s.progress[id].done || s.progress[id].legendRepaired) continue;
+      s.progress[id].legendRepaired = true;
+      if (!s.dinos.some((d) => d.legendary && d.species === species)) {
+        s.dinos.push({ uid: s.nextUid++, species, legendary: true, tint: 0, horns: 0, eggs: 0 });
+      }
+    }
+  }
+
   function defaults() {
     return {
       dna: 0,
@@ -46,6 +59,7 @@
     s.cloud = Object.assign(defaults().cloud, s.cloud || {});
     if (!Array.isArray(s.cloud.showcase)) s.cloud.showcase = [];
     global.Town.migrate(s);
+    repairLegends(s);
     s.seeded = true; // sample stories now come from stories.json, not local storage
     return s;
   }

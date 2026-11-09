@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-11-09: Missing story dino fix
+
+### Fixed
+- **Kiddo finished "הַצְּרָצַר וְהַנְּמָלָה" but got no dino.** A phone still running the old cached app didn't know the new species, so it marked the story done and gave only the 50 DNA "all legendaries owned" bonus. The new app (1) gives the missing אוֹבִּירַפְּטוֹר legendary once on load to anyone who already finished that story without it, and (2) won't finish a story whose dino the running app doesn't know: it asks to close and reopen the app.
+- Service worker cache bumped to `v31`.
+
 ## 2026-11-09: A long new story and a 16th dino
 
 ### Added
