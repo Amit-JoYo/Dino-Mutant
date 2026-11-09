@@ -35,7 +35,7 @@
   const FAVORITE = {
     trex: 'meat', raptor: 'meat', spino: 'fish', plesio: 'fish', ptero: 'fish',
     brachio: 'leaf', trike: 'apple', stego: 'leaf', anky: 'berry', para: 'apple',
-    compy: 'meat', igua: 'apple', diplo: 'leaf', dilo: 'meat', pachy: 'berry',
+    compy: 'meat', igua: 'apple', diplo: 'leaf', dilo: 'meat', pachy: 'berry', ovi: 'berry',
   };
   const SIZE = { brachio: 1.2, stego: 1.05, spino: 1.1, raptor: 0.9, diplo: 1.2, compy: 0.75, igua: 1.05, pachy: 0.95 };
 

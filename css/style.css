@@ -58,6 +58,7 @@ main { max-width: 720px; margin: 0 auto; padding: 12px; }
 .btn.alt { background: #3f8bd8; box-shadow: 0 4px 0 #2a65a6; }
 .btn.ghost { background: #e6efe9; color: var(--green-d); box-shadow: 0 4px 0 #c5d6cb; }
 .btn.danger { background: var(--bad); box-shadow: 0 4px 0 #a52a2f; }
+.btn.wait { opacity: .55; animation: none; }
 .btn.finish { background: #f59e0b; box-shadow: 0 4px 0 #b36f05; animation: pulse 1.2s infinite; }
 .btn:disabled { opacity: .5; cursor: default; }
 @keyframes pulse { 50% { transform: scale(1.03); } }

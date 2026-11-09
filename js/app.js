@@ -7,7 +7,7 @@
   const esc = (s) => global.Puzzles.escapeHtml(s);
   const R = () => global.Renderer;
 
-  const LEGEND_ORDER = ['trex', 'brachio', 'trike', 'ptero', 'stego', 'anky', 'raptor', 'para', 'spino', 'plesio', 'compy', 'igua', 'diplo', 'dilo', 'pachy'];
+  const LEGEND_ORDER = ['trex', 'brachio', 'trike', 'ptero', 'stego', 'anky', 'raptor', 'para', 'spino', 'plesio', 'compy', 'igua', 'diplo', 'dilo', 'pachy', 'ovi'];
   const MUTATE_COST = 10;
 
   function defaults() {

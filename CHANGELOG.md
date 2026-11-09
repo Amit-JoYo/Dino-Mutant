@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-11-09: A long new story and a 16th dino
+
+### Added
+- **New story:** "הַצְּרָצַר וְהַנְּמָלָה" (Aesop's fable, 20 paragraphs, full nikud). It is the longest story so far.
+- **New dino: אוֹבִּירַפְּטוֹר (Oviraptor).** Beak, crest, wattle and little feathered arms. It has a legendary version (אוֹבִּירַפְּטוֹר הָעֲנָנִים, lilac), baby, Mega and dress-up support, a museum fact and a favourite food. The new story unlocks it, because every other dino was already taken by an earlier story.
+
+### Changed
+- **Reading can't be skipped by tapping:** a tap on the text or the continue button is only accepted after a short wait per word (0.6 s + 0.15 s per letter, up to 2.5 s). Early taps show "לְאַט לְאַט" and the button looks dimmed until the word can be passed. Voice reading is not limited.
+- Service worker cache bumped to `v30`.
+- **Voice reading understands same-sounding letters:** ת/ט, ק/כ/ח and ע/א are treated as equal, so a name like אתי still counts when the recognizer writes אטי.
+
 ## 2026-10-27: Smoother World on phones
 
 The World got slow after Dino Town, because every small dino animation made the browser recalculate the whole big map. On a simulated slow phone (CPU slowed 4×) with 15 dinos, 12 babies, 12 buildings and 30 decorations, it went from 9 to about 80 frames per second in the meadow, and from about 9 to about 140 in town.

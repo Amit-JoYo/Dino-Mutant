@@ -47,7 +47,9 @@
   let consumed = {};
 
   const norm = (s) => (global.Puzzles.stripNikud(s).match(/[א-ת]/g) || []).map((c) => FINALS[c] || c).join('');
-  const skeleton = (s) => s.replace(/[וי]/g, '');
+  // Letters that sound the same in modern Hebrew, so the recognizer's spelling (אתי / אטי) still counts.
+  const SOUND = { 'ת': 'ט', 'ק': 'כ', 'ח': 'כ', 'ע': 'א' };
+  const skeleton = (s) => s.replace(/[וי]/g, '').replace(/[תקחע]/g, (c) => SOUND[c]);
 
   function lev(a, b) {
     const d = Array.from({ length: a.length + 1 }, (_, i) => [i]);
@@ -58,7 +60,7 @@
     return d[a.length][b.length];
   }
 
-  // Recognizers return unpointed text with free spelling, so compare letters only, ignoring ו/י and allowing one typo in longer words.
+  // Recognizers return unpointed text with free spelling, so compare letters only, ignoring ו/י, treating same-sounding letters as equal and allowing one typo in longer words.
   function matches(expected, spoken) {
     const a = norm(expected);
     const b = norm(spoken);
@@ -263,10 +265,33 @@
       : 'קָרָאתִי (הַמְשֵׁךְ לַמִּלָּה הַבָּאָה) ➔';
     $('btn-advance').classList.toggle('finish', last);
     if (spans[wordIdx]) spans[wordIdx].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    startWordTimer();
+  }
+
+  /* Tapping through is only accepted after a short time that grows with the word's length,
+     so the story can't be skipped by tapping fast. Voice reading is not limited. */
+  let tapOkAt = 0;
+  let waitTimer = 0;
+
+  function startWordTimer() {
+    const letters = Math.max(1, norm(words[wordIdx] || '').length);
+    const ms = Math.min(2500, 600 + letters * 150);
+    tapOkAt = Date.now() + ms;
+    $('btn-advance').classList.add('wait');
+    $('reader-text').classList.add('wait');
+    clearTimeout(waitTimer);
+    waitTimer = setTimeout(() => {
+      $('btn-advance').classList.remove('wait');
+      $('reader-text').classList.remove('wait');
+    }, ms);
   }
 
   function advance() {
     if (!story) return;
+    if (Date.now() < tapOkAt) {
+      global.App.toast('לְאַט לְאַט, קִרְאִי אֶת הַמִּלָּה 🐢');
+      return;
+    }
     if (wordIdx < words.length - 1) {
       wordIdx++;
       updateWords();

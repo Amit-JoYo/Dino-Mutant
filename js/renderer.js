@@ -33,6 +33,8 @@
       legendName: 'דִּילוֹפוֹזָאוּר הַקֶּסֶם' },
     pachy: { name: 'פַּכִיצֶפָלוֹזָאוּרוּס', short: 'פַּכִיצֶפָלוֹזָאוּר', trait: 'horn', cost: 85,
       legendName: 'פַּכִיצֶפָלוֹזָאוּר הַשֶּׁלֶג' },
+    ovi: { name: 'אוֹבִּירַפְּטוֹר', short: 'אוֹבִּירַפְּטוֹר', trait: 'speed', cost: 55,
+      legendName: 'אוֹבִּירַפְּטוֹר הָעֲנָנִים' },
   };
 
   const TRAITS = {
@@ -75,19 +77,20 @@
     diplo: { body: '#3ddc84', dark: '#168a4a', belly: '#d6ffe6' },
     dilo: { body: '#ff7ad9', dark: '#b03a94', belly: '#ffd6f2' },
     pachy: { body: '#e8eef5', dark: '#8ea3b8', belly: '#ffffff' },
+    ovi: { body: '#c9b8ff', dark: '#8a74d6', belly: '#f1ecff' },
   };
 
   const HORN_AT = {
     trex: [236, 58], brachio: [250, 18], trike: [212, 76], ptero: [196, 42],
     stego: [236, 134], anky: [244, 132], raptor: [240, 50], spino: [228, 64], para: [236, 50], plesio: [230, 38],
-    compy: [214, 74], igua: [228, 52], diplo: [268, 34], dilo: [276, 52], pachy: [232, 34],
+    compy: [214, 74], igua: [228, 52], diplo: [268, 34], dilo: [276, 52], pachy: [232, 34], ovi: [232, 28],
   };
 
   // eye centre + radius, used for the closed-eye lid shown while sleeping
   const EYE_AT = {
     trex: [250, 70, 7], brachio: [258, 27, 5.5], trike: [254, 118, 6], ptero: [230, 74, 6],
     stego: [246, 148, 5.5], anky: [252, 150, 5.5], raptor: [240, 58, 6], spino: [234, 76, 6], para: [232, 62, 6],
-    plesio: [236, 44, 5], compy: [216, 94, 8], igua: [240, 66, 6.5], diplo: [274, 41, 4.5], dilo: [240, 58, 6], pachy: [250, 70, 6],
+    plesio: [236, 44, 5], compy: [216, 94, 8], igua: [240, 66, 6.5], diplo: [274, 41, 4.5], dilo: [240, 58, 6], pachy: [250, 70, 6], ovi: [240, 66, 6],
   };
 
   const EMPTY_WEAR = { hat: '', face: '', neck: '', clothes: '', back0: '', back1: '', tail: '', lid: '' };
@@ -494,6 +497,36 @@
           ${w.hat}${w.face}${w.lid}
         </g>`;
     },
+
+    ovi(p, w) {
+      const leg = (c) => `<path d="M112 138 Q100 176 112 196 L148 200 Q150 190 134 186 Q138 164 146 138 Z" fill="${c}"/>`;
+      return `
+        <g class="rig-tail"><path d="M96 108 Q52 100 8 124 Q52 138 100 134 Z" fill="${p.body}"/>
+          <path d="M8 124 Q-2 104 18 98 Q16 112 30 118 M8 124 Q-6 126 4 144 Q18 136 28 128" fill="${p.dark}" stroke="${p.dark}" stroke-width="2" stroke-linejoin="round"/>${w.tail}</g>
+        <g transform="translate(-6,0)"><g class="rig-leg a">${leg(p.dark)}</g></g>
+        <g class="rig-body">
+          ${w.back0}
+          <ellipse cx="148" cy="118" rx="56" ry="38" fill="${p.body}"/>
+          <ellipse cx="156" cy="134" rx="38" ry="20" fill="${p.belly}"/>
+          <path d="M100 96 q6 -12 14 -4 q4 -14 14 -6 q6 -14 16 -4 q8 -12 16 -2" stroke="${p.dark}" stroke-width="3" fill="none" stroke-linecap="round" opacity=".7"/>
+          ${w.clothes}${w.back1}${w.neck}
+        </g>
+        <g transform="translate(28,0)"><g class="rig-leg b">${leg(p.body)}</g></g>
+        <path d="M186 124 q18 2 24 18 M196 118 q14 0 20 12" stroke="${p.dark}" stroke-width="6" fill="none" stroke-linecap="round"/>
+        <path d="M206 140 l12 6 M214 134 l12 4" stroke="#fff3d6" stroke-width="3" stroke-linecap="round"/>
+        <g class="rig-head">
+          <path d="M180 110 Q198 92 208 66 L236 74 Q230 104 204 128 Z" fill="${p.body}"/>
+          <path d="M214 62 Q206 22 238 24 Q262 28 250 60 Z" fill="${p.dark}"/>
+          <path d="M224 56 Q222 34 238 34 M236 58 Q240 40 248 42" stroke="${p.belly}" stroke-width="3" fill="none" stroke-linecap="round" opacity=".8"/>
+          <ellipse cx="238" cy="68" rx="26" ry="20" fill="${p.body}"/>
+          <path d="M250 56 Q284 56 288 76 Q284 92 256 88 Q246 74 250 56 Z" fill="#ffd23f" stroke="#d99a00" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M256 82 q14 4 28 -4" stroke="#b07700" stroke-width="2" fill="none" stroke-linecap="round"/>
+          <circle cx="280" cy="66" r="2" fill="#b07700"/>
+          <path d="M226 84 q-12 14 -2 28 q8 -10 12 -22 Z" fill="#ff7a59" stroke="#c4482a" stroke-width="1.5" stroke-linejoin="round"/>
+          ${eye(240, 66, 6)}
+          ${w.hat}${w.face}${w.lid}
+        </g>`;
+    },
   };
 
   function horns(species, n, p) {
@@ -553,7 +586,7 @@
   ).join('');
 
   /**
-   * @param {string} species trex|brachio|trike|ptero|stego|anky|raptor|para|spino|plesio|compy|igua|diplo|dilo|pachy
+   * @param {string} species trex|brachio|trike|ptero|stego|anky|raptor|para|spino|plesio|compy|   igua|diplo|dilo|pachy|ovi
    * @param {{tint?:number,legendary?:boolean,horns?:number,eggs?:number,outfit?:object,evolved?:boolean,baby?:boolean}} opts
    */
   function dino(species, opts) {

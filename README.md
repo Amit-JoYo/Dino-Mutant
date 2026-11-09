@@ -13,7 +13,7 @@ No ads, no purchases, no accounts. Progress stays on the device (`localStorage`)
 - **Trail (מַסָּע):** a side-scrolling expedition with 3 obstacles per trip. Clear each with the dino's special ability or by solving a puzzle.
 - **World (הָעוֹלָם):** the whole herd lives on a big scrollable map: the meadow, plus a town where she spends DNA to build a house, park, restaurant, farm, pool, school, library, hospital, mall, cinema, fire station and museum. Each building costs one short builder's maths question. Tap a building to go inside: build rooms (bedroom, kitchen, classroom, chicken coop, and more), upgrade them to ⭐⭐⭐ and add floors. Put dinos into rooms: they walk into the building, do the room's activity, and the room looks after their needs (a bedroom refills energy, a kitchen food) even while the app is closed. Each building also has something to do: school lessons (a Lab puzzle), a shop till where she pays the exact price with coins, a farm that sends eggs and milk to the restaurant, an egg room that hatches eggs sooner, fire rescues, a library where dinos listen while she reads, and a museum of dino facts. ⭐ Town stars open more lots, and 🌷 decorations can be placed anywhere on the grass. There's a mini-map and a 🏡 button to get back to the meadow. Dinos wander, eat, play, sleep, splash, visit each other and stroll into town, with day and night following the device clock. Tap a dino to feed, play, put to sleep, wash, hug, rename, or dress it. Needs decay slowly but never drop below a floor, so dinos get sad but never die.
 - **Dress-up:** 63 items in 6 slots (hats, clothes, glasses, neck, back, tail), bought with DNA.
-- **My Park (הַגַּן שֶׁלִּי):** 15 dino species, each with a legendary version, plus a shop for new ones.
+- **My Park (הַגַּן שֶׁלִּי):** 16 dino species, each with a legendary version, plus a shop for new ones.
 - **Picture cards:** share a dino card or a progress card to WhatsApp as an image.
 - **Parent mode (מַצַּב הוֹרִים):** behind a small multiplication gate. Paste, edit and delete stories from school, set custom practice words, or reset progress.
 - **Class sharing (optional, off by default):** with Firebase configured, a parent can enable it, join a class by code with the child's first name, choose up to 3 dinos to show, and delete all online data at any time. Classmates' dinos then visit in a "הַכִּתָּה" view of the World tab, where kids can send emoji reactions and gift a copy of a dino (one a day). Only a first name and the chosen dinos are shared: no chat, pictures or personal details. The owner manages classes and names from `admin.html`. See `plan.md` section 8 for setup.
@@ -42,7 +42,7 @@ If a phone cannot connect, open `diag.html` and run the step-by-step test. Full 
 
 ## Adding stories
 
-Add entries to `stories.json`. Each needs an `id`, a `title`, and either `text` (one paragraph per line) or a `paragraphs` array. Use full nikud. Each paragraph read earns DNA, so keep paragraphs to one or two sentences. Optional `legend` is the species id whose legendary dino the story unlocks: `trex`, `brachio`, `trike`, `ptero`, `stego`, `anky`, `raptor`, `para`, `spino`, `plesio`, `compy`, `igua`, `diplo`, `dilo` or `pachy`. Stories without it unlock the next missing legendary. Stories are fetched network-first, so new ones appear without an app update.
+Add entries to `stories.json`. Each needs an `id`, a `title`, and either `text` (one paragraph per line) or a `paragraphs` array. Use full nikud. Each paragraph read earns DNA, so keep paragraphs to one or two sentences. Optional `legend` is the species id whose legendary dino the story unlocks: `trex`, `brachio`, `trike`, `ptero`, `stego`, `anky`, `raptor`, `para`, `spino`, `plesio`, `compy`, `igua`, `diplo`, `dilo`, `pachy` or `ovi`. Stories without it unlock the next missing legendary. Stories are fetched network-first, so new ones appear without an app update.
 
 ## Project layout
 
@@ -50,7 +50,7 @@ Add entries to `stories.json`. Each needs an `id`, a `title`, and either `text` 
 |---|---|
 | `index.html`, `css/style.css` | UI, RTL layout, animations |
 | `js/app.js` | State, tabs, lab, park, parent menu |
-| `js/renderer.js` | SVG dino rigs (15 species) and animations |
+| `js/renderer.js` | SVG dino rigs (16 species) and animations |
 | `js/wardrobe.js` | Dress-up items and where they attach to each species |
 | `js/nursery.js` | Eggs, hatching, baby dinos and the Mega evolution |
 | `js/world.js` | The world map, pet care and the class view |
