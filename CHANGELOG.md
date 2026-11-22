@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-11-22: Wordlings, an English game for a first reader
+
+### Added
+- **Wordlings** (`wordlings/`, <https://amit-joyo.github.io/Dino-Mutant/wordlings/>): a separate installable app for a 7-year-old who understands spoken English but cannot read it yet. A wild creature asks out loud for something, she taps the right picture, and three right answers make the creature her friend. 4 places, 52 words, 12 original creatures that level up and evolve. It has its own service worker and manifest. See `wordlings/README.md`.
+
 ## 2026-11-22: Hebrew writing (✍️ כְּתִיבָה tab)
 
 ### Added

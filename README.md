@@ -11,6 +11,7 @@ No ads, no purchases, no accounts. Progress stays on the device (`localStorage`)
 - **Lab (מַעְבָּדָה):** procedural 2nd-grade math puzzles with full nikud: bridging 10, tens and units, missing addend, word problems, and word practice. Includes a drag-and-drop egg counting board and text-to-speech (he-IL).
 - **Reading (קְרִיאָה):** karaoke-style reading, word by word, with a highlighted active word, per-word and per-paragraph read-aloud, and an optional microphone check. Each paragraph earns DNA and a small dino upgrade; finishing a story unlocks that story's own legendary dino (shown on its card). Reading a finished story again earns a small daily bonus and an egg; eggs hatch after an hour into baby dinos that can be dressed, and a dino whose 3 babies have all hatched evolves into a "מֵגָה" form.
 - **Writing (✍️ כְּתִיבָה):** trace the 27 Hebrew letters (including final letters) in print (דַּפּוּס) or handwriting (כְּתַב יָד) style with a finger, stylus or mouse, in three steps: a bold guide, a faint guide, then from memory. Letters are taught in the school stroke order (numbered start points, arrows, a written description and a ▶️ demonstration). The app checks the tracing automatically; each good tracing earns DNA, each letter has 3 stars, and the third star gives a dino upgrade.
+- **Wordlings (English):** a separate app in [`wordlings/`](wordlings/README.md) for a first reader who understands spoken English: creatures ask for things out loud and she taps the right picture to catch them.
 - **Trail (מַסָּע):** a side-scrolling expedition with 3 obstacles per trip. Clear each with the dino's special ability or by solving a puzzle.
 - **World (הָעוֹלָם):** the whole herd lives on a big scrollable map: the meadow, plus a town where she spends DNA to build a house, park, restaurant, farm, pool, school, library, hospital, mall, cinema, fire station and museum. Each building costs one short builder's maths question. Tap a building to go inside: build rooms (bedroom, kitchen, classroom, chicken coop, and more), upgrade them to ⭐⭐⭐ and add floors. Put dinos into rooms: they walk into the building, do the room's activity, and the room looks after their needs (a bedroom refills energy, a kitchen food) even while the app is closed. Each building also has something to do: school lessons (a Lab puzzle), a shop till where she pays the exact price with coins, a farm that sends eggs and milk to the restaurant, an egg room that hatches eggs sooner, fire rescues, a library where dinos listen while she reads, and a museum of dino facts. ⭐ Town stars open more lots, and 🌷 decorations can be placed anywhere on the grass. There's a mini-map and a 🏡 button to get back to the meadow. Dinos wander, eat, play, sleep, splash, visit each other and stroll into town, with day and night following the device clock. Tap a dino to feed, play, put to sleep, wash, hug, rename, or dress it. Needs decay slowly but never drop below a floor, so dinos get sad but never die.
 - **Dress-up:** 63 items in 6 slots (hats, clothes, glasses, neck, back, tail), bought with DNA.
@@ -18,6 +19,17 @@ No ads, no purchases, no accounts. Progress stays on the device (`localStorage`)
 - **Picture cards:** share a dino card or a progress card to WhatsApp as an image.
 - **Parent mode (מַצַּב הוֹרִים):** behind a small multiplication gate. Paste, edit and delete stories from school, set custom practice words, or reset progress.
 - **Class sharing (optional, off by default):** with Firebase configured, a parent can enable it, join a class by code with the child's first name, choose up to 3 dinos to show, and delete all online data at any time. Classmates' dinos then visit in a "הַכִּתָּה" view of the World tab, where kids can send emoji reactions and gift a copy of a dino (one a day). Only a first name and the chosen dinos are shared: no chat, pictures or personal details. The owner manages classes and names from `admin.html`. See `plan.md` section 8 for setup.
+
+## Release notes
+
+Latest changes, newest first. The full history, with technical details, is in [CHANGELOG.md](CHANGELOG.md).
+
+- **2026-11-22: Wordlings.** A new English game for a first reader, in its own app: [Wordlings](https://amit-joyo.github.io/Dino-Mutant/wordlings/). Creatures ask for things out loud, she taps the right picture and catches them.
+- **2026-11-22: Hebrew writing, with stroke order.** A new ✍️ כְּתִיבָה tab: trace all 27 letters in print or handwriting, with numbered start points, arrows, a written description and a ▶️ demonstration of the right stroke order. The order is taught, not yet enforced.
+- **2026-11-22: Colours for each part of a built dino**, and a new story, "טְרֶמְפּ עַל מַטְאֲטֵא".
+- **2026-11-19: Dino Workshop.** Some stories give a build instead of a legendary dino: she designs her own dino.
+- **2026-10-25: Dino Town.** A big world map where she builds houses and shops, furnishes rooms and sends dinos inside.
+- **2026-10-19: Class sharing** (optional, off by default) and dress-up.
 
 ## Run locally
 
