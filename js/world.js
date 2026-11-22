@@ -1133,7 +1133,7 @@
     const out = [];
     (d.babies || []).forEach((b, i) => {
       if (!b.hatched) return;
-      const bd = { uid: `b${d.uid}-${i}`, species: d.species, tint: global.Nursery.babyTint(d), legendary: d.legendary, outfit: b.outfit, baby: true, parentUid: d.uid, babyIdx: i };
+      const bd = { uid: `b${d.uid}-${i}`, species: d.species, tint: global.Nursery.babyTint(d), legendary: d.legendary, outfit: b.outfit, baby: true, parts: d.parts, colors: d.colors, parentUid: d.uid, babyIdx: i };
       const s = makeSprite(bd);
       const p = nearParent(par, s);
       s.x = p.x;

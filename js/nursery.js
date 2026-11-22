@@ -37,7 +37,7 @@
   }
 
   function babyHtml(d, b, extra) {
-    return R().dino(d.species, Object.assign({ tint: babyTint(d), legendary: d.legendary, outfit: b.outfit, baby: true }, extra));
+    return R().dino(d.species, Object.assign({ tint: babyTint(d), legendary: d.legendary, outfit: b.outfit, baby: true, parts: d.parts, colors: d.colors }, extra));
   }
 
   /* Old saves had a decorative "eggs" counter. Those eggs become real ones that hatch an hour after the update. */

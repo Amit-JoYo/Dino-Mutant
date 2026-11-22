@@ -80,8 +80,7 @@
     ctx.fill();
     const name = global.App.dinoName(d);
     text(ctx, name, SIZE / 2, 855, 64, '#23323a');
-    const sp = R().SPECIES[d.species];
-    const bits = [d.legendary ? '🌟 אַגָּדִי' : `${R().TRAITS[sp.trait].icon} ${R().TRAITS[sp.trait].name}`];
+    const bits = [d.legendary ? '🌟 אַגָּדִי' : R().traitsOf(d).map((t) => `${R().TRAITS[t].icon} ${R().TRAITS[t].name}`).join(' ')];
     if (d.pet && global.World) bits.push(`❤️ ${global.World.Pets.hearts(d)}`);
     text(ctx, bits.join('   '), SIZE / 2, 950, 40, '#14391f');
     return canvas;
@@ -96,8 +95,8 @@
     canvas.height = SIZE;
     const ctx = canvas.getContext('2d');
     background(ctx, '🦖 הַגַּן שֶׁלִּי');
-    const species = Object.keys(R().SPECIES);
-    const owned = new Set(st.dinos.map((d) => d.species));
+    const species = Object.keys(R().SPECIES).filter((s) => !R().SPECIES[s].custom);
+    const owned = new Set(st.dinos.filter((d) => !R().SPECIES[d.species].custom).map((d) => d.species));
     const legends = new Set(st.dinos.filter((d) => d.legendary).map((d) => d.species));
     const stories = Object.values(st.progress || {}).filter((p) => p && p.done).length;
 

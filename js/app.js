@@ -38,6 +38,7 @@
       solved: 0,
       trips: 0,
       wardrobe: [],
+      builds: 0, // Dino Workshop builds earned from builder stories and not used yet
       cloud: { on: false, code: '', className: '', name: '', locked: false, showcase: [], seen: 0, lastGiftDay: '' },
       town: null,
     };
@@ -54,6 +55,13 @@
     if (!Array.isArray(s.dinos) || !s.dinos.length) s.dinos = defaults().dinos;
     if (!s.dinos.some((d) => d.uid === s.active)) s.active = s.dinos[0].uid;
     s.dinos = s.dinos.filter((d) => global.Renderer.SPECIES[d.species]);
+    s.dinos.forEach((d) => {
+      if (d.species === 'custom') {
+        d.parts = global.Renderer.cleanParts(d.parts);
+        d.colors = global.Renderer.cleanColors(d.colors);
+      }
+    });
+    s.builds = Math.max(0, Math.floor(Number(s.builds)) || 0);
     global.Nursery.migrate(s);
     s.wardrobe = Array.from(new Set((Array.isArray(s.wardrobe) ? s.wardrobe : []).concat(global.Wardrobe.STARTERS)));
     s.cloud = Object.assign(defaults().cloud, s.cloud || {});
@@ -74,6 +82,7 @@
         title: String(s.title),
         text: Array.isArray(s.paragraphs) ? s.paragraphs.join('\n') : String(s.text),
         legend: LEGEND_ORDER.includes(s.legend) ? s.legend : '',
+        builder: s.builder === true,
         shared: true,
       }));
   }
@@ -120,7 +129,15 @@
     },
 
     dinoHtml(d, extra) {
-      return R().dino(d.species, Object.assign({ tint: d.tint, legendary: d.legendary, horns: d.horns, eggs: global.Nursery.eggCount(d), outfit: d.outfit, evolved: d.evolved, baby: d.baby }, extra));
+      return R().dino(d.species, Object.assign({ tint: d.tint, legendary: d.legendary, horns: d.horns, eggs: global.Nursery.eggCount(d), outfit: d.outfit, evolved: d.evolved, baby: d.baby, parts: d.parts, colors: d.colors }, extra));
+    },
+
+    /* Mutation: the main colour moves to the next one, and so does every part the kid coloured on her own. */
+    nextTint(d) {
+      const n = R().TINTS.length;
+      d.prevTint = d.tint;
+      d.tint = (d.tint + 1) % n;
+      if (d.colors) Object.keys(d.colors).forEach((k) => { d.colors[k] = (d.colors[k] + 1) % n; });
     },
 
     dinoName(d) {
@@ -213,12 +230,17 @@
         global.Nursery.addEgg(d);
         text = 'בֵּיצָה קְטַנָּה הִתְגַּלְּתָה לְיַד הַדִּינוֹ! הִיא תִּבְקַע בְּעוֹד שָׁעָה 🥚';
       } else {
-        d.prevTint = d.tint;
-        d.tint = (d.tint + 1) % R().TINTS.length;
+        App.nextTint(d);
         text = 'צֶבַע הַדִּינוֹ הִשְׁתַּנָּה! 🎨';
       }
       App.save();
       return { text, dino: d };
+    },
+
+    /* Finishing a builder story earns one build in the Dino Workshop instead of a legendary dino. */
+    grantBuild() {
+      App.state.builds = (App.state.builds || 0) + 1;
+      App.save();
     },
 
     /* Finishing a story unlocks that story's own legendary dino. If she already has it (or the story has none), she gets the next one she is missing. */
@@ -293,8 +315,7 @@
       if (d.legendary) return;
       if (App.state.dna < MUTATE_COST) return App.toast(`צָרִיךְ עוֹד ${MUTATE_COST - App.state.dna} דנ״א. פִּתְרִי חִידוֹת! 🧩`);
       App.state.dna -= MUTATE_COST;
-      d.prevTint = d.tint;
-      d.tint = (d.tint + 1) % R().TINTS.length;
+      App.nextTint(d);
       App.save();
       App.refreshHud();
       App.renderLabDino();
@@ -310,7 +331,7 @@
           (d) => `<div class="zoo-card${d.uid === st.active ? ' on' : ''}${d.legendary ? ' legend' : ''}">
             <div class="mini">${App.dinoHtml(d)}</div>
             <b>${App.dinoName(d)}</b>
-            ${d.legendary ? '<small>🌟 אַגָּדִי</small>' : `<small>${R().TRAITS[R().SPECIES[d.species].trait].icon} ${R().TRAITS[R().SPECIES[d.species].trait].name}</small>`}
+            ${d.legendary ? '<small>🌟 אַגָּדִי</small>' : `<small>${R().traitsOf(d).map((t) => `${R().TRAITS[t].icon} ${R().TRAITS[t].name}`).join(' · ')}</small>`}
             ${d.gift ? `<small>🎁 מַתָּנָה${d.giftFrom ? ` מֵ${esc(d.giftFrom)}` : ''}</small>` : ''}
             <button class="btn small" data-active="${d.uid}" ${d.uid === st.active ? 'disabled' : ''}>${d.uid === st.active ? '✔ בַּחוּר' : 'בַּחֲרִי'}</button>
           </div>`
@@ -319,12 +340,14 @@
 
       const ownedReg = new Set(st.dinos.filter((d) => !d.legendary).map((d) => d.species));
       $('zoo-shop').innerHTML = Object.keys(R().SPECIES)
-        .filter((s) => !ownedReg.has(s))
+        .filter((s) => !ownedReg.has(s) && !R().SPECIES[s].custom)
         .map((s) => {
           const sp = R().SPECIES[s];
           return `<button class="shop-item" data-buy="${s}"><span class="mini">${R().dino(s, { tint: 1 })}</span><b>${sp.short}</b><small>🧬 ${sp.cost} דנ״א</small></button>`;
         })
         .join('') || '<p class="muted">אָסַפְתְּ אֶת כׇּל הַדִּינוֹזָאוּרִים! 🎉</p>';
+
+      global.Builder.renderCard($('zoo-workshop'));
 
       const ownedLeg = new Set(st.dinos.filter((d) => d.legendary).map((d) => d.species));
       $('zoo-legends').innerHTML = LEGEND_ORDER.map((s) =>
@@ -381,6 +404,7 @@
         <p class="muted">הַדְבִּיקוּ טֶקְסְט עִם נִקּוּד. כָּל שׁוּרָה הִיא פִּסְקָה.</p>
         <input id="p-title" class="input" placeholder="כּוֹתֶרֶת הַסִּפּוּר" maxlength="60">
         <textarea id="p-text" class="input" rows="6" placeholder="הַדְבִּיקוּ כָּאן אֶת הַטֶּקְסְט..."></textarea>
+        <label class="p-check"><input type="checkbox" id="p-builder"> 🛠️ פְּרָס: בּוֹנִים דִּינוֹ בְּעַצְמָנוּ (בִּמְקוֹם דִּינוֹזָאוּר אַגָּדִי)</label>
         <div class="row"><button class="btn" id="p-add">${editing ? 'שְׁמִירַת שִׁנּוּיִים' : 'שְׁמִירַת הַסִּפּוּר'}</button>${editing ? '<button class="btn ghost" id="p-cancel">בִּטּוּל</button>' : ''}</div>
         <h3>📚 הַסִּפּוּרִים</h3>
         <div id="p-stories">${App.shared.map((s) => `<div class="p-row"><span>📌 ${esc(s.title)}</span><small class="muted">מִן הַמַּאְגָּר</small></div>`).join('')}${st.stories.filter((s) => !App.shared.some((x) => x.id === s.id)).map((s) => `<div class="p-row"><span>${esc(s.title)}</span><span class="p-btns"><button class="btn small alt" data-edit="${esc(s.id)}">עֲרִיכָה</button><button class="btn small danger" data-del="${esc(s.id)}">מְחִיקָה</button></span></div>`).join('') || (App.shared.length ? '' : '<p class="muted">אֵין סִפּוּרִים</p>')}</div>
@@ -398,6 +422,7 @@
       if (editing) {
         $('p-title').value = editing.title;
         $('p-text').value = editing.text;
+        $('p-builder').checked = editing.builder === true;
       }
       global.Cloud.mountParent($('p-cloud'));
       if (global.caches) {
@@ -414,6 +439,7 @@
         if (editing) {
           editing.title = title;
           editing.text = text;
+          editing.builder = $('p-builder').checked;
           // keep progress, but never beyond the new length
           const pr = st.progress[editing.id];
           if (pr) {
@@ -422,7 +448,7 @@
           }
           App._editId = null;
         } else {
-          st.stories.push({ id: 'u' + Date.now(), title, text });
+          st.stories.push({ id: 'u' + Date.now(), title, text, builder: $('p-builder').checked });
         }
         App.save();
         App.toast('נִשְׁמַר! ✔');

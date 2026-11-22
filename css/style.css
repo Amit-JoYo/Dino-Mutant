@@ -104,6 +104,25 @@ main { max-width: 720px; margin: 0 auto; padding: 12px; }
 .story-prize { flex: 0 0 74px; width: 74px; }
 .story-prize .dino-svg * { animation: none !important; }
 .story-prize:not(.got) .silhouette { filter: brightness(0) opacity(.22); }
+.story-prize.builder { display: grid; place-items: center; font-size: 2.6rem; }
+.story-prize.builder:not(.got) { filter: grayscale(1) opacity(.5); }
+.p-check { display: block; text-align: right; margin: 6px 0; font-size: .95rem; }
+#zoo-workshop .bw-note { text-align: center; font-weight: 700; margin: 4px 0 8px; }
+#zoo-workshop .bw-mine { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 10px; }
+.bw .bw-preview { position: sticky; top: -20px; z-index: 3; background: #fff; border-bottom: 2px dashed #cfe3d6; padding: 6px 0 2px; }
+.bw .bw-preview .dino-svg { width: min(62vw, 250px); height: auto; margin: 0 auto; }
+.bw .bw-abilities { text-align: center; font-weight: 700; font-size: .95rem; margin: 6px 0; min-height: 1.4em; }
+.bw-group { margin: 10px 0; text-align: right; }
+.bw-group > b { display: block; margin-bottom: 4px; }
+.bw-opts { display: flex; flex-wrap: wrap; gap: 6px; }
+.bw-opt { font: inherit; font-size: .9rem; display: flex; flex-direction: column; align-items: center; gap: 0; min-width: 76px; padding: 6px 8px; border: 3px solid #cfe3d6; border-radius: 14px; background: #f4fbf6; cursor: pointer; }
+.bw-opt span { font-size: 1.4rem; line-height: 1.2; }
+.bw-opt.on { border-color: var(--green); background: #dff5e6; font-weight: 700; }
+.bw-color { width: 38px; height: 38px; border-radius: 50%; border: 3px solid; cursor: pointer; }
+.bw-color.on { outline: 4px solid var(--green); outline-offset: 2px; }
+.bw-cparts { margin-bottom: 8px; }
+.bw-cpart { position: relative; min-width: 64px; }
+.bw-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px #9bb7a5; margin-top: 2px; }
 .reader-head { display: flex; align-items: center; gap: 10px; }
 .reader-head h2 { flex: 1; margin: 0; }
 .progress { height: 10px; background: #dcebe1; border-radius: 99px; margin: 10px 0; overflow: hidden; }

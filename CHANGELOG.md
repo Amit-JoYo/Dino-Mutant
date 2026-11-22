@@ -1,5 +1,26 @@
 # Changelog
 
+## 2026-11-22: Colours for each part of a built dino
+
+### Added
+- **Per-part colours in the Dino Workshop.** Under "צֶבַע" she first picks what to colour (הַכֹּל, רֹאשׁ, גּוּף, בֶּטֶן, רַגְלַיִם וְיָדַיִם, זָנָב, עַל הַגַּב, דֻּגְמָה) and then one of the 10 colours. Each part button shows its current colour. Picking a colour for "הַכֹּל" sets the main colour and clears the part colours; "↩️ כְּמוֹ הַצֶּבַע הָרָאשִׁי" sends one part back to the main colour. 🎲 also colours some parts at random.
+- Part colours are saved on the dino as `colors` (part → colour number) and also show on its babies. Mutation (and the colour upgrade from reading) moves the main colour and all part colours to the next colour. Old saves have no `colors` and look the same as before.
+- Service worker cache bumped to `v33`.
+
+## 2026-11-22: New story "טְרֶמְפּ עַל מַטְאֲטֵא"
+
+### Added
+- **New story:** "טְרֶמְפּ עַל מַטְאֲטֵא" (Julia Donaldson / Axel Scheffler, a rhyming poem, 44 short paragraphs, full nikud). All 16 legendaries are already taken, so it is marked `"builder": true` and gives a build in the Dino Workshop. Stories load network-first, so no app update or cache bump is needed.
+
+## 2026-11-19: Dino Workshop (build your own dino as a story prize)
+
+### Added
+- **Dino Workshop (מִפְעַל הַדִּינוֹזָאוּרִים).** A story can now give the kid a build of her own dino instead of a legendary. She picks body (round/long/chubby), neck (none/short/long/very long), head (round/snout/beak), back legs (short/long/thick), front legs (none/short/long), hands (none/small/big), tail (none/short/long/club), back (smooth/plates/spikes/sail/wings), horns (none/one/three), pattern (smooth/spots/stripes), colour and name, with a live animated preview and a 🎲 random button. Different front and back leg lengths tilt the body, and very tall builds are scaled to fit.
+- Each build gives abilities for the Trail (wings = fly, long neck = neck, horns = horn, plates/spikes/club = armor, long back legs = speed, snout = bite, sail = swim, chubby body or beak = roar).
+- A custom dino works like any other dino: dress-up, eggs and babies, Mega, World and Town, mutation (colour), share card. It can be rebuilt for free from 🦖 My Park. It is not shown to classmates or gifted (class sharing only knows the 16 species).
+- Mark a story with `"builder": true` in `stories.json` (or tick the new box when adding a story in parent mode) to make it give a build. Such a story shows 🛠️ on its card.
+- Service worker cache bumped to `v32`; new file `js/builder.js`.
+
 ## 2026-11-09: Missing story dino fix
 
 ### Fixed

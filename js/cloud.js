@@ -72,7 +72,7 @@
   function showcasePayload() {
     const ids = new Set(cfg().showcase);
     return global.App.state.dinos
-      .filter((d) => ids.has(d.uid))
+      .filter((d) => ids.has(d.uid) && d.species !== 'custom')
       .slice(0, MAX_SHOWCASE)
       .map((d) => ({
         species: d.species,
@@ -96,7 +96,7 @@
     const cls = await within(db.doc(`classes/${code}`).get(), 20000, 'timeout-class');
     if (!cls.exists || !cls.data().active) throw fail('class');
     const c = cfg();
-    if (!c.showcase.length) c.showcase = global.App.state.dinos.slice(0, MAX_SHOWCASE).map((d) => d.uid);
+    if (!c.showcase.length) c.showcase = global.App.state.dinos.filter((d) => d.species !== 'custom').slice(0, MAX_SHOWCASE).map((d) => d.uid);
     const ref = memberRef(code);
     const mine = await within(ref.get(), 20000, 'timeout-member');
     if (mine.exists) {
@@ -247,7 +247,7 @@
     const species = global.Renderer.SPECIES;
     const list = snap.docs
       .map((doc) => ({ from: doc.id, species: doc.data().species, tint: doc.data().tint }))
-      .filter((g) => species[g.species] && g.species !== 'trex');
+      .filter((g) => species[g.species] && g.species !== 'trex' && g.species !== 'custom');
     if (list.some((g) => !nameCache[g.from])) await classmates();
     return list.map((g) => ({
       from: g.from,
@@ -282,7 +282,7 @@
       nameCache[doc.id] = name;
       const dinos = (Array.isArray(m.dinos) ? m.dinos : [])
         .slice(0, MAX_SHOWCASE)
-        .filter((d) => d && species[d.species])
+        .filter((d) => d && species[d.species] && d.species !== 'custom')
         .map((d) => {
           const outfit = {};
           if (d.outfit && typeof d.outfit === 'object') {
@@ -379,7 +379,7 @@
       return;
     }
 
-    const picks = App.state.dinos.map((d) =>
+    const picks = App.state.dinos.filter((d) => d.species !== 'custom').map((d) =>
       `<label class="pc-check"><input type="checkbox" data-show="${d.uid}" ${c.showcase.includes(d.uid) ? 'checked' : ''}> ${esc(App.dinoName(d))}</label>`
     ).join('');
     el.innerHTML = `

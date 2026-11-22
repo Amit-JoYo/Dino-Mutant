@@ -22,8 +22,8 @@
 
   function hasTrait(dino, needs) {
     if (dino.legendary) return true;
-    const mine = global.Renderer.SPECIES[dino.species].trait;
-    return needs.some((n) => n === mine) || (needs.includes('horn') && dino.horns > 0);
+    const mine = global.Renderer.traitsOf(dino);
+    return needs.some((n) => mine.includes(n)) || (needs.includes('horn') && dino.horns > 0);
   }
 
   const traitLabel = (needs) => needs.map((n) => `${global.Renderer.TRAITS[n].icon} ${global.Renderer.TRAITS[n].name}`).join(' / ');
@@ -33,14 +33,13 @@
     $('trail-run').hidden = true;
     $('trail-intro').hidden = false;
     const d = App.activeDino();
-    const sp = global.Renderer.SPECIES[d.species];
-    const t = global.Renderer.TRAITS[sp.trait];
+    const t = global.Renderer.traitsOf(d).map((id) => `${global.Renderer.TRAITS[id].icon} ${global.Renderer.TRAITS[id].name}`).join(' · ');
     $('trail-pick').innerHTML = App.state.dinos
       .map((x) => `<button class="pick${x.uid === d.uid ? ' on' : ''}" data-uid="${x.uid}">
           <span class="mini">${App.dinoHtml(x)}</span><small>${App.dinoName(x)}</small></button>`)
       .join('');
     const extra = d.legendary ? ' ✨ דִּינוֹזָאוּר אַגָּדִי — מַצְלִיחַ בְּכׇל מִכְשׁוֹל!' : d.horns > 0 ? ' + קֶרֶן קְטַנָּה 🦏' : '';
-    $('trail-traits').textContent = `הַיְּכֹלֶת שֶׁל ${App.dinoName(d)}: ${t.icon} ${t.name}${extra}`;
+    $('trail-traits').textContent = `הַיְּכֹלֶת שֶׁל ${App.dinoName(d)}: ${t}${extra}`;
   }
 
   function setProgress(done) {

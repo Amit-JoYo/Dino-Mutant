@@ -35,6 +35,8 @@
       legendName: 'פַּכִיצֶפָלוֹזָאוּר הַשֶּׁלֶג' },
     ovi: { name: 'אוֹבִּירַפְּטוֹר', short: 'אוֹבִּירַפְּטוֹר', trait: 'speed', cost: 55,
       legendName: 'אוֹבִּירַפְּטוֹר הָעֲנָנִים' },
+    /* The dino a child builds in the Dino Workshop (a story prize). Its look comes from `parts`, its abilities from traitsOf(). */
+    custom: { name: 'דִּינוֹ מְיֻחָד', short: 'הַדִּינוֹ שֶׁלִּי', trait: 'roar', cost: 0, legendName: 'דִּינוֹ מְיֻחָד', custom: true },
   };
 
   const TRAITS = {
@@ -93,7 +95,7 @@
     plesio: [236, 44, 5], compy: [216, 94, 8], igua: [240, 66, 6.5], diplo: [274, 41, 4.5], dilo: [240, 58, 6], pachy: [250, 70, 6], ovi: [240, 66, 6],
   };
 
-  const EMPTY_WEAR = { hat: '', face: '', neck: '', clothes: '', back0: '', back1: '', tail: '', lid: '' };
+  const EMPTY_WEAR = { hat: '', face: '', neck: '', clothes: '', back0: '', back1: '', tail: '', lid: '', mini: '' };
 
   const topOf = (cx, cy, rx, ry, x) => cy - ry * Math.sqrt(Math.max(0, 1 - ((x - cx) / rx) ** 2));
 
@@ -529,9 +531,269 @@
     },
   };
 
-  function horns(species, n, p) {
+  /* ---- Custom dino ----
+     Every part is one choice from CUSTOM_GROUPS: [id, Hebrew label, emoji]. The first group entry named in `def` is the default.
+     Sizes below are in the 300x220 rig space; the dino stands on y=200 and faces right. */
+  const CUSTOM_GROUPS = [
+    { key: 'body', label: 'גּוּף', def: 'round', opts: [['round', 'עָגֹל', '🟢'], ['long', 'אָרֹךְ', '🥖'], ['chubby', 'שָׁמֵן', '🍐']] },
+    { key: 'neck', label: 'צַוָּאר', def: 'short', opts: [['none', 'בְּלִי צַוָּאר', '⛔'], ['short', 'קָצָר', '🐕'], ['long', 'אָרֹךְ', '🦒'], ['xlong', 'אָרֹךְ מְאֹד', '🦕']] },
+    { key: 'head', label: 'רֹאשׁ', def: 'round', opts: [['round', 'עָגֹל', '🙂'], ['snout', 'חֹטֶם אָרֹךְ', '🐊'], ['beak', 'מַקּוֹר', '🐦']] },
+    { key: 'hind', label: 'רַגְלַיִם אֲחוֹרִיּוֹת', def: 'short', opts: [['short', 'קְצָרוֹת', '🐾'], ['long', 'אֲרֻכּוֹת', '🦵'], ['thick', 'עֲבוֹת', '🐘']] },
+    { key: 'fore', label: 'רַגְלַיִם קִדְמִיּוֹת', def: 'none', opts: [['none', 'אֵין', '⛔'], ['short', 'קְצָרוֹת', '🐾'], ['long', 'אֲרֻכּוֹת', '🦵']] },
+    { key: 'hands', label: 'יָדַיִם', def: 'small', opts: [['none', 'בְּלִי יָדַיִם', '⛔'], ['small', 'קְטַנּוֹת', '🤏'], ['big', 'גְּדוֹלוֹת', '🖐️']] },
+    { key: 'tail', label: 'זָנָב', def: 'short', opts: [['none', 'בְּלִי זָנָב', '⛔'], ['short', 'קָצָר', '〰️'], ['long', 'אָרֹךְ', '🐍'], ['club', 'אַלָּה', '🔨']] },
+    { key: 'spine', label: 'עַל הַגַּב', def: 'none', opts: [['none', 'חָלָק', '⛔'], ['plates', 'לוּחוֹת', '🔺'], ['spikes', 'קוֹצִים', '🌵'], ['sail', 'מִפְרָשׂ', '⛵'], ['wings', 'כְּנָפַיִם', '🪽']] },
+    { key: 'horns', label: 'קַרְנַיִם', def: 'none', opts: [['none', 'בְּלִי קַרְנַיִם', '⛔'], ['one', 'קֶרֶן אַחַת', '🦄'], ['three', 'שָׁלוֹשׁ קַרְנַיִם', '🦏']] },
+    { key: 'pattern', label: 'דֻּגְמָה', def: 'spots', opts: [['none', 'חָלָק', '⛔'], ['spots', 'נְקֻדּוֹת', '🐆'], ['stripes', 'פַּסִּים', '🐅']] },
+  ];
+
+  /* Parts of a custom dino that can get their own colour (an index into TINTS). Parts without one follow the main colour. */
+  const COLOR_PARTS = [
+    ['head', 'רֹאשׁ', '🙂'], ['body', 'גּוּף', '🟢'], ['belly', 'בֶּטֶן', '🥚'], ['legs', 'רַגְלַיִם וְיָדַיִם', '🦵'],
+    ['tail', 'זָנָב', '〰️'], ['spine', 'עַל הַגַּב', '🔺'], ['pattern', 'דֻּגְמָה', '🐆'],
+  ];
+
+  function cleanColors(colors) {
+    const src = colors && typeof colors === 'object' ? colors : {};
+    const out = {};
+    COLOR_PARTS.forEach(([k]) => {
+      const v = src[k];
+      if (Number.isInteger(v) && v >= 0 && v < TINTS.length) out[k] = v;
+    });
+    return out;
+  }
+
+  const defaultParts = () => Object.fromEntries(CUSTOM_GROUPS.map((g) => [g.key, g.def]));
+
+  /* Anything unknown (old save, bad data) falls back to the default for that part. */
+  function cleanParts(parts) {
+    const src = parts && typeof parts === 'object' ? parts : {};
+    const out = {};
+    CUSTOM_GROUPS.forEach((g) => {
+      out[g.key] = g.opts.some((o) => o[0] === src[g.key]) ? src[g.key] : g.def;
+    });
+    return out;
+  }
+
+  /* A custom dino's abilities come from what it was built with; every other dino has its species' single trait. */
+  function traitsOf(d) {
+    if (!d || d.species !== 'custom') return [SPECIES[d ? d.species : 'trex'].trait];
+    const P = cleanParts(d.parts);
+    const t = [];
+    if (P.spine === 'wings') t.push('fly');
+    if (P.spine === 'sail') t.push('swim');
+    if (P.neck === 'long' || P.neck === 'xlong') t.push('neck');
+    if (P.horns !== 'none') t.push('horn');
+    if (P.spine === 'plates' || P.spine === 'spikes' || P.tail === 'club') t.push('armor');
+    if (P.hind === 'long') t.push('speed');
+    if (P.head === 'snout') t.push('bite');
+    if (P.body === 'chubby' || P.head === 'beak') t.push('roar');
+    return t.length ? t : ['roar'];
+  }
+
+  const BODY_DIM = { round: [52, 46], long: [76, 34], chubby: [66, 54] };
+  const HIND_H = { short: 38, long: 74, thick: 50 };
+  const FORE_H = { short: 38, long: 74 };
+  const NECK_LEN = { none: 0, short: 34, long: 76, xlong: 118 };
+  const TAIL_LEN = { none: 14, short: 42, long: 92, club: 64 };
+  const HEAD_R = { round: 24, snout: 20, beak: 21 };
+  const HEAD_REACH = { round: 32, snout: 64, beak: 46 };
+
+  const rnd = (v) => Math.round(v * 10) / 10;
+
+  /* Works out where every part goes. The body is tilted when the front and back legs differ in length, and the
+     whole dino is scaled and centred to fit the picture (a very long neck would otherwise leave it). */
+  function customLayout(parts) {
+    const P = cleanParts(parts);
+    const [rx, ry] = BODY_DIM[P.body];
+    const hb = HIND_H[P.hind];
+    const hf = P.fore === 'none' ? hb : FORE_H[P.fore];
+    const bx = 140;
+    const cy = 200 - (hb + hf) / 2 - ry * 0.92;
+    const tilt = (Math.atan2((hb - hf) * 0.5, 70) * 180) / Math.PI;
+    const nl = NECK_LEN[P.neck];
+    const nb = [bx + rx * 0.55, cy - ry * 0.7];
+    const hr = HEAD_R[P.head];
+    const hx = nl ? nb[0] + nl * 0.5 + 10 : bx + rx * 0.82;
+    const hy = nl ? nb[1] - nl * 0.85 - 4 : cy - ry * 0.55;
+    const eye = P.head === 'snout' ? [hx + 4, hy - 6, 5.5] : P.head === 'beak' ? [hx + 6, hy - 5, 6] : [hx + 8, hy - 5, 6.5];
+    const tl = TAIL_LEN[P.tail];
+    const tail = { ax: bx - rx * 0.88, ay: cy + ry * 0.05, len: tl };
+    tail.tx = tail.ax - tl;
+    tail.ty = tail.ay + (P.tail === 'club' ? 14 : tl * 0.22);
+
+    const a = (tilt * Math.PI) / 180;
+    const rot = (x, y) => [bx + (x - bx) * Math.cos(a) - (y - cy) * Math.sin(a), cy + (x - bx) * Math.sin(a) + (y - cy) * Math.cos(a)];
+    const spineTop = { plates: 30, spikes: 16, sail: 42, wings: 0, none: 0 }[P.spine];
+    const headTop = Math.max(P.horns !== 'none' ? 26 : 0, P.head === 'beak' ? 17 : 0);
+    const raw = [
+      [bx - rx, cy], [bx + rx, cy], [bx, cy - ry - spineTop], [tail.tx - (P.tail === 'club' ? 14 : 0), tail.ty],
+      [hx - hr, hy], [hx + HEAD_REACH[P.head], hy], [hx, hy - hr - headTop],
+    ];
+    if (P.spine === 'wings') raw.push([bx - rx * 0.05 - 98, cy - ry * 0.75 - 56]);
+    if (P.hands !== 'none') raw.push([bx + rx * 0.55 + (P.hands === 'big' ? 48 : 26), cy + ry * 0.05 + 26]);
+    const pts = raw.map(([x, y]) => rot(x, y));
+    pts.push([bx - rx * 0.5 - 24, 200], [bx + rx * 0.5 + (P.fore === 'none' ? 18 : 34), 200]);
+    const minX = Math.min(...pts.map((q) => q[0]));
+    const maxX = Math.max(...pts.map((q) => q[0]));
+    const minY = Math.min(...pts.map((q) => q[1]));
+    const s = Math.min(1, 276 / (maxX - minX), 190 / (200 - minY));
+    const shift = 150 - (150 + ((minX + maxX) / 2 - 150) * s);
+    const fit = `translate(${rnd(shift)} 0) translate(150 200) scale(${rnd(s * 1000) / 1000}) translate(-150 -200)`;
+
+    const anchors = {
+      hat: [hx - 2, hy - hr + 4, 0.75, 8],
+      face: [eye[0], eye[1], 0.7],
+      neck: nl ? [nb[0] + nl * 0.18, nb[1] - nl * 0.3, 0.85] : [hx - 8, hy + hr - 6, 0.85],
+      body: [bx, cy, rx / 56, ry / 37],
+      back: [bx - rx * 0.3, cy - ry * 0.85, 1],
+      tail: [tail.tx, tail.ty, 0.9],
+    };
+    return { P, rx, ry, bx, cy, tilt, nb, nl, hx, hy, hr, eye, tail, fit, anchors, hornAt: [hx - 8, hy - hr + 4] };
+  }
+
+  function customDino(p, w, L) {
+    const { P, rx, ry, bx, cy, hx, hy, hr, nb, nl, tail: T } = L;
+    const HD = L.pal('head');
+    const BD = L.pal('body');
+    const LG = L.pal('legs');
+    const TL = L.pal('tail');
+    const SP = L.pal('spine');
+    const bellyFill = L.colors.belly !== undefined ? L.pal('belly').body : BD.belly;
+    const wb = { short: 26, long: 22, thick: 36 }[P.hind];
+    const wf = 24;
+    const xb = bx - rx * 0.5;
+    const xf = bx + rx * 0.5;
+
+    const leg = (x, wd, c, cls) => `<g class="rig-leg ${cls}"><rect x="${rnd(x - wd / 2)}" y="${rnd(cy)}" width="${wd}" height="${rnd(197 - cy)}" rx="${wd / 2}" fill="${c}"/>`
+      + `<ellipse cx="${rnd(x + wd * 0.3)}" cy="195" rx="${rnd(wd * 0.78)}" ry="6.5" fill="${c}"/><circle cx="${rnd(x + wd * 0.92)}" cy="196" r="2.2" fill="#fff"/></g>`;
+    const hasFore = P.fore !== 'none';
+    const legs = leg(xb - 9, wb, LG.dark, 'a') + (hasFore ? leg(xf - 9, wf, LG.dark, 'b') : '')
+      + leg(xb + 9, wb, LG.body, 'b') + (hasFore ? leg(xf + 9, wf, LG.body, 'a') : '');
+
+    const topAt = (x) => cy - ry * Math.sqrt(Math.max(0, 1 - ((x - bx) / rx) ** 2));
+
+    let tailSvg = `<path d="M${rnd(T.ax + 10)} ${rnd(T.ay - 17)} Q${rnd(T.ax - T.len * 0.55)} ${rnd(T.ay - 10)} ${rnd(T.tx)} ${rnd(T.ty)} Q${rnd(T.ax - T.len * 0.45)} ${rnd(T.ay + 16)} ${rnd(T.ax + 10)} ${rnd(T.ay + 17)} Z" fill="${TL.body}"/>`;
+    if (P.tail === 'club') {
+      const spikes = [0, 1, 2, 3, 4, 5].map((i) => {
+        const ang = (i / 6) * Math.PI * 2;
+        const ca = Math.cos(ang);
+        const sa = Math.sin(ang);
+        return `<path d="M${rnd(T.tx + ca * 11 - sa * 4)} ${rnd(T.ty + sa * 11 + ca * 4)} L${rnd(T.tx + ca * 21)} ${rnd(T.ty + sa * 21)} L${rnd(T.tx + ca * 11 + sa * 4)} ${rnd(T.ty + sa * 11 - ca * 4)} Z" fill="#fff3d6" stroke="#e6cf9c" stroke-width="1.2" stroke-linejoin="round"/>`;
+      }).join('');
+      tailSvg += `${spikes}<circle cx="${rnd(T.tx)}" cy="${rnd(T.ty)}"       r="13" fill="${TL.dark}"/>`;
+    }
+
+    let spine = '';
+    if (P.spine === 'plates') {
+      for (let i = 0; i < 5; i++) {
+        const x = bx - rx * 0.62 + (i * rx * 1.1) / 4;
+        const y = topAt(x) + 6;
+        const h = i === 1 || i === 2 ? 34 : 26;
+        spine += `<path d="M${rnd(x - 10)} ${rnd(y)} L${rnd(x - 3)} ${rnd(y - h)} L${rnd(x + 10)} ${rnd(y)} Z" fill="${SP.dark}" stroke="#fff" stroke-opacity=".4" stroke-width="1.5" stroke-linejoin="round"/>`;
+      }
+    } else if (P.spine === 'spikes') {
+      for (let i = 0; i < 7; i++) {
+        const x = bx - rx * 0.8 + (i * rx * 1.15) / 6;
+        const y = topAt(x) + 5;
+        spine += `<path d="M${rnd(x - 5)} ${rnd(y)} L${rnd(x - 2)} ${rnd(y - 16)} L${rnd(x + 5)} ${rnd(y)} Z" fill="${SP.dark}"/>`;
+      }
+    } else if (P.spine === 'sail') {
+      const x1 = bx - rx * 0.6;
+      const x2 = bx + rx * 0.45;
+      const y1 = topAt(x1) + 6;
+      const y2 = topAt(x2) + 6;
+      const mx = bx - rx * 0.07;
+      const my = cy - ry - 60;
+      const at = (t) => [(1 - t) * (1 - t) * x1 + 2 * (1 - t) * t * mx + t * t * x2, (1 - t) * (1 - t) * y1 + 2 * (1 - t) * t * my + t * t * y2];
+      spine = `<path d="M${rnd(x1)} ${rnd(y1)} Q${rnd(mx)} ${rnd(my)} ${rnd(x2)} ${rnd(y2)} Z" fill="${SP.dark}" opacity=".88"/>`
+        + [0.25, 0.5, 0.75].map((t) => {
+          const [qx, qy] = at(t);
+          return `<path d="M${rnd(qx)} ${rnd(qy)} L${rnd(qx)} ${rnd(topAt(qx) + 6)}" stroke="${SP.belly}" stroke-opacity=".6" stroke-width="2.5" stroke-linecap="round"/>`;
+        }).join('');
+    } else if (P.spine === 'wings') {
+      const sx = bx - rx * 0.05;
+      const sy = cy - ry * 0.75;
+      spine = `<g class="rig-wing"><path d="M${rnd(sx)} ${rnd(sy)} Q${rnd(sx - 30)} ${rnd(sy - 70)} ${rnd(sx - 98)} ${rnd(sy - 56)} Q${rnd(sx - 64)} ${rnd(sy - 42)} ${rnd(sx - 78)} ${rnd(sy - 14)} Q${rnd(sx - 48)} ${rnd(sy - 20)} ${rnd(sx - 50)} ${rnd(sy + 8)} Q${rnd(sx - 26)} ${rnd(sy - 4)} ${rnd(sx - 10)} ${rnd(sy + 14)} Z" fill="${SP.dark}" stroke="${SP.body}" stroke-width="2.5" stroke-linejoin="round"/></g>`;
+    }
+
+    let pattern = '';
+    const patCol = L.colors.pattern !== undefined ? L.pal('pattern').body : BD.dark;
+    const patOp = L.colors.pattern !== undefined ? 0.9 : 0.45;
+    if (P.pattern === 'spots') {
+      pattern = [[-0.45, -0.3, 7], [-0.1, -0.5, 5], [0.3, -0.25, 6.5], [-0.3, 0.05, 5], [0.05, -0.05, 4.5], [0.5, 0.0, 4]]
+        .map(([fx, fy, r]) => `<circle cx="${rnd(bx + fx * rx)}" cy="${rnd(cy + fy * ry)}" r="${r}" fill="${patCol}" opacity="${patOp}"/>`).join('');
+    } else if (P.pattern === 'stripes') {
+      pattern = [-0.55, -0.3, -0.05, 0.2, 0.45].map((fx) => {
+        const x = bx + fx * rx;
+        const top = topAt(x) + 5;
+        return `<path d="M${rnd(x)} ${rnd(top)} Q${rnd(x + 5)} ${rnd(top + ry * 0.35)} ${rnd(x + 1)} ${rnd(top + ry * 0.7)}" stroke="${patCol}" stroke-width="6" stroke-linecap="round" fill="none" opacity="${L.colors.pattern !== undefined ? 0.9 : 0.5}"/>`;
+      }).join('');
+    }
+
+    let hands = '';
+    if (P.hands !== 'none') {
+      const big = P.hands === 'big';
+      const sx = bx + rx * 0.55;
+      const sy = cy + ry * 0.05;
+      const ex = sx + (big ? 36 : 17);
+      const ey = sy + (big ? 20 : 20);
+      const fingers = [[-5, 7], [2, 9], [9, 5]].map(([dx, dy]) => `<path d="M${rnd(ex)} ${rnd(ey)} l${dx * (big ? 1.4 : 1)} ${dy * (big ? 1.4 : 1)}"       stroke="${LG.dark}" stroke-width="3.5" stroke-linecap="round"/><circle cx="${rnd(ex + dx * (big ? 1.4 : 1))}" cy="${rnd(ey + dy * (big ? 1.4 : 1))}" r="1.9" fill="#fff"/>`).join('');
+            hands = `<path d="M${rnd(sx)} ${rnd(sy)} Q${rnd(sx + (ex - sx) * 0.7)} ${rnd(sy - 4)} ${rnd(ex)} ${rnd(ey)}" stroke="${LG.dark}" stroke-width="${big ? 10 : 8}" stroke-linecap="round" fill="none"/>${fingers}`;
+    }
+
+    const nw = { 0: 0, 34: 34, 76: 28, 118: 24 }[nl];
+    const neck = nl ? `<path d="M${rnd(nb[0])} ${rnd(nb[1] + 12)} Q${rnd(nb[0] + nl * 0.1)} ${rnd(nb[1] - nl * 0.55)} ${rnd(hx - 4)} ${rnd(hy + 8)}" stroke="${BD.body}" stroke-width="${nw}" stroke-linecap="round" fill="none"/>` : '';
+
+    let head;
+    if (P.head === 'snout') {
+      head = `<ellipse cx="${rnd(hx)}" cy="${rnd(hy)}" rx="22" ry="19" fill="${HD.body}"/>`
+        + `<path d="M${rnd(hx + 8)} ${rnd(hy - 10)} L${rnd(hx + 58)} ${rnd(hy - 4)} Q${rnd(hx + 65)} ${rnd(hy + 4)} ${rnd(hx + 57)} ${rnd(hy + 11)} L${rnd(hx + 8)} ${rnd(hy + 15)} Z" fill="${HD.body}"/>`
+        + `<path d="M${rnd(hx + 8)} ${rnd(hy + 9)} L${rnd(hx + 57)} ${rnd(hy + 8)} Q${rnd(hx + 54)} ${rnd(hy + 22)} ${rnd(hx + 40)} ${rnd(hy + 22)} L${rnd(hx + 12)} ${rnd(hy + 20)} Z" fill="${HD.dark}"/>`
+        + `<path d="M${rnd(hx + 24)} ${rnd(hy + 9)} l4 8 l4 -8 M${rnd(hx + 38)} ${rnd(hy + 9)} l4 8 l4 -8" fill="#fff" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>`
+        + `<circle cx="${rnd(hx + 55)}" cy="${rnd(hy - 2)}" r="2.3" fill="${HD.dark}"/>`;
+    } else if (P.head === 'beak') {
+      head = `<path d="M${rnd(hx - 6)} ${rnd(hy - 19)} Q${rnd(hx - 4)} ${rnd(hy - 38)} ${rnd(hx + 8)} ${rnd(hy - 31)} Q${rnd(hx + 4)} ${rnd(hy - 27)} ${rnd(hx + 6)} ${rnd(hy - 18)} Z" fill="${HD.dark}"/>`
+        + `<circle cx="${rnd(hx)}" cy="${rnd(hy)}" r="21" fill="${HD.body}"/>`
+        + `<path d="M${rnd(hx + 14)} ${rnd(hy - 9)} Q${rnd(hx + 40)} ${rnd(hy - 7)} ${rnd(hx + 46)} ${rnd(hy + 4)} Q${rnd(hx + 30)} ${rnd(hy + 8)} ${rnd(hx + 14)} ${rnd(hy + 11)} Z" fill="#ffb347" stroke="#d98a1f" stroke-width="2" stroke-linejoin="round"/>`;
+    } else {
+      head = `<circle cx="${rnd(hx)}" cy="${rnd(hy)}" r="24" fill="${HD.body}"/>`
+        + `<ellipse cx="${rnd(hx + 19)}" cy="${rnd(hy + 7)}" rx="13" ry="10" fill="${HD.body}"/>`
+        + `<circle cx="${rnd(hx - 3)}" cy="${rnd(hy + 10)}" r="5" fill="#ff7eb6" opacity=".4"/>`
+        + `<path d="M${rnd(hx + 11)} ${rnd(hy + 13)} q9 6 18 0" stroke="${HD.dark}" stroke-width="2.5" fill="none" stroke-linecap="round"/>`
+        + `<circle cx="${rnd(hx + 28)}" cy="${rnd(hy + 3)}" r="2" fill="${HD.dark}"/>`;
+    }
+
+    const horn = (x, y, dx, h) => `<path d="M${rnd(x - 6)} ${rnd(y + 5)} L${rnd(x + dx)} ${rnd(y - h)} L${rnd(x + 6)} ${rnd(y + 5)} Z" fill="#fff3d6" stroke="#e6cf9c" stroke-width="1.5" stroke-linejoin="round"/>`;
+    const hornTop = hy - hr + 3;
+    let bighorns = '';
+    if (P.horns === 'one') bighorns = horn(hx + 8, hornTop, 4, 26);
+    else if (P.horns === 'three') bighorns = horn(hx + 14, hornTop + 4, 5, 22) + horn(hx - 2, hornTop, 0, 24) + horn(hx + 28, hornTop + 14, 8, 18);
+
+    return `<g transform="${L.fit}">
+      ${legs}
+      <g transform="rotate(${rnd(L.tilt)} ${rnd(bx)} ${rnd(cy)})">
+        <g class="rig-tail">${tailSvg}${w.tail}</g>
+        <g class="rig-body">
+          ${w.back0}${spine}
+          <ellipse cx="${rnd(bx)}" cy="${rnd(cy)}" rx="${rx}"           ry="${ry}" fill="${BD.body}"/>
+                    <ellipse cx="${rnd(bx + rx * 0.1)}" cy="${rnd(cy + ry * 0.4)}" rx="${rnd(rx * 0.7)}" ry="${rnd(ry * 0.5)}" fill="${bellyFill}"/>
+          ${pattern}${w.clothes}${w.back1}${w.neck}
+        </g>
+        ${hands}
+        <g class="rig-head">
+          ${neck}${head}
+          ${eye(L.eye[0], L.eye[1], L.eye[2])}
+          ${bighorns}${w.mini}${w.hat}${w.face}${w.lid}
+        </g>
+      </g>
+    </g>`;
+  }
+  BUILDERS.custom = customDino;
+
+  function horns(species, n, p, at) {
     if (!n) return '';
-    const [x, y] = HORN_AT[species];
+    const [x, y] = at || HORN_AT[species];
     let out = '';
     for (let i = 0; i < n; i++) {
       const dx = (i - (n - 1) / 2) * 13;
@@ -556,16 +818,16 @@
     `<path class="sparkle" style="animation-delay:${i * 0.45}s" d="M${x} ${y - 9} L${x + 3} ${y - 3} L${x + 9} ${y} L${x + 3} ${y + 3} L${x} ${y + 9} L${x - 3} ${y + 3} L${x - 9} ${y} L${x - 3} ${y - 3} Z" fill="#fff6a8" stroke="#ffd23f" stroke-width="1"/>`
   ).join('');
 
-  function lid(species, p) {
-    const [x, y, r] = EYE_AT[species];
+  function lid(at, p) {
+    const [x, y, r] = at;
     return `<g class="rig-lid"><circle cx="${x + 1}" cy="${y}" r="${r + 1.5}" fill="${p.body}"/><path d="M${x - r} ${y + 1} Q${x + 1} ${y + r * 0.9} ${x + r + 2} ${y + 1}" stroke="#222" stroke-width="2" fill="none" stroke-linecap="round"/></g>`;
   }
 
   let evoCount = 0;
 
   /* Baby look: big shiny eyes and rosy cheeks drawn over the parent's face, and a broken eggshell under the feet. */
-  function babyFace(species) {
-    const [x, y, r] = EYE_AT[species];
+  function babyFace(at) {
+    const [x, y, r] = at;
     return `<g class="baby-face"><ellipse cx="${(x - r * 0.4).toFixed(1)}" cy="${(y + r * 2.5).toFixed(1)}" rx="${(r * 1.3).toFixed(1)}" ry="${(r * 0.8).toFixed(1)}" fill="#ff7eb6" opacity=".5"/>
       <circle cx="${x + 1}" cy="${y}" r="${(r * 1.65).toFixed(1)}" fill="#fff" stroke="#23323a" stroke-width="1.2"/>
       <circle cx="${x + 2.5}" cy="${y + 0.5}" r="${r.toFixed(1)}" fill="#23323a"/>
@@ -587,14 +849,22 @@
 
   /**
    * @param {string} species trex|brachio|trike|ptero|stego|anky|raptor|para|spino|plesio|compy|   igua|diplo|dilo|pachy|ovi
-   * @param {{tint?:number,legendary?:boolean,horns?:number,eggs?:number,outfit?:object,evolved?:boolean,baby?:boolean}} opts
+   * @param {{tint?:number,legendary?:boolean,horns?:number,eggs?:number,outfit?:object,evolved?:boolean,baby?:boolean,parts?:object,colors?:object}} opts parts: the build of a 'custom' dino; colors: its per-part colours (TINTS indexes)
    */
   function dino(species, opts) {
-    const o = Object.assign({ tint: 0, legendary: false, horns: 0, eggs: 0, outfit: null, evolved: false, baby: false }, opts);
-    const p = o.legendary ? LEGEND_PALETTE[species] : TINTS[o.tint % TINTS.length];
-    const w = Object.assign({}, EMPTY_WEAR, global.Wardrobe ? global.Wardrobe.wear(species, o.outfit) : null, { lid: lid(species, p) });
-    if (o.baby) w.face = babyFace(species) + w.face;
-    const body = `<g class="rig-root">${BUILDERS[species](p, w)}${horns(species, o.horns, p)}</g>`;
+    const o = Object.assign({ tint: 0, legendary: false, horns: 0, eggs: 0, outfit: null, evolved: false, baby: false, parts: null, colors: null }, opts);
+    const p = o.legendary && LEGEND_PALETTE[species] ? LEGEND_PALETTE[species] : TINTS[o.tint % TINTS.length];
+    const L = species === 'custom' ? customLayout(o.parts) : null;
+    if (L) {
+      L.colors = cleanColors(o.colors);
+      L.pal = (k) => (L.colors[k] !== undefined ? TINTS[L.colors[k]] : p);
+    }
+    const eyeAt = L ? L.eye : EYE_AT[species];
+    const w = Object.assign({}, EMPTY_WEAR, global.Wardrobe ? global.Wardrobe.wear(species, o.outfit, L && L.anchors) : null, { lid: lid(eyeAt, L ? L.pal('head') : p) });
+    if (o.baby) w.face = babyFace(eyeAt) + w.face;
+    // a custom dino's little horns sit inside its head group, in the same space as the rest of the build
+    if (L) w.mini = horns(species, o.horns, p, L.hornAt);
+    const body = `<g class="rig-root">${BUILDERS[species](p, w, L)}${L ? '' : horns(species, o.horns, p)}</g>`;
     return `<svg class="dino-svg sp-${species}${o.legendary ? ' legendary' : ''}${o.evolved ? ' evolved' : ''}${o.baby ? ' baby' : ''}" viewBox="0 0 300 220" role="img" aria-label="${SPECIES[species].short}">
       ${o.evolved ? evoBack() : ''}
       ${o.baby ? SHELL : ''}
@@ -607,5 +877,5 @@
     return `<div class="silhouette">${dino(species, { tint: 0 })}</div>`;
   }
 
-  global.Renderer = { SPECIES, TRAITS, TINTS, dino, silhouette };
+  global.Renderer = { SPECIES, TRAITS, TINTS, CUSTOM_GROUPS, COLOR_PARTS, cleanParts, cleanColors, defaultParts, traitsOf, dino, silhouette };
 })(window);

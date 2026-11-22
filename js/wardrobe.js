@@ -156,10 +156,10 @@
   }
 
   /** SVG fragments for one dino's outfit, keyed by the slot the renderer injects them into. */
-  function wear(species, outfit) {
+  function wear(species, outfit, anchors) {
     const out = { hat: '', face: '', neck: '', clothes: '', back0: '', back1: '', tail: '' };
     if (!outfit) return out;
-    const A = ANCHORS[species];
+    const A = anchors || ANCHORS[species];
     const get = (slot) => (outfit[slot] && BY_ID[outfit[slot]] && BY_ID[outfit[slot]].slot === slot ? BY_ID[outfit[slot]] : null);
     let it = get('hat');
     if (it) out.hat = place(A.hat, it.svg);

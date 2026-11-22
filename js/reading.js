@@ -210,7 +210,9 @@
           : pr.par > 0 ? `פִּסְקָה ${pr.par + 1} מִתּוֹךְ ${total}` : `${total} פִּסְקָאוֹת`;
         const R = global.Renderer;
         let prize = '';
-        if (s.legend && R.SPECIES[s.legend]) {
+        if (s.builder) {
+          prize = `<span class="story-prize builder${pr.done ? ' got' : ''}" title="בּוֹנִים דִּינוֹ">🛠️</span>`;
+        } else if (s.legend && R.SPECIES[s.legend]) {
           const got = global.App.state.dinos.some((d) => d.legendary && d.species === s.legend);
           prize = `<span class="story-prize${got ? ' got' : ''}" title="${esc(R.SPECIES[s.legend].legendName)}">${got ? R.dino(s.legend, { legendary: true }) : R.silhouette(s.legend)}</span>`;
         }
@@ -327,11 +329,17 @@
 
     let legendary = null;
     let bonus = 0;
+    let built = false;
     if (lastPar && !pr.done) {
       pr.done = true;
-      const res = App.unlockLegendary(story.legend);
-      legendary = res.dino;
-      bonus = res.bonusDna;
+      if (story.builder) {
+        App.grantBuild();
+        built = true;
+      } else {
+        const res = App.unlockLegendary(story.legend);
+        legendary = res.dino;
+        bonus = res.bonusDna;
+      }
     }
     App.save();
     App.refreshHud();
@@ -367,17 +375,21 @@
       if (dnaGain) lines.push(`+${dnaGain} נְקֻדּוֹת דנ״א`);
       if (update) lines.push(update.text);
       if (legendary) lines.push(`בַּגַּן שֶׁלָּךְ מְחַכֶּה: ${global.Renderer.SPECIES[legendary.species].legendName}`);
+      else if (built) lines.push('הַפְּרָס שֶׁלָּךְ: לִבְנוֹת דִּינוֹזָאוּר בְּעַצְמֵךְ! 🛠️ בַּחֲרִי גּוּף, צַוָּאר, רַגְלַיִם, יָדַיִם וְעוֹד');
       else if (bonus) lines.push(`כָּל הָאַגָּדִיִּים כְּבָר אֶצְלֵךְ! בּוֹנוּס: +${bonus} דנ״א`);
       else lines.push('סִיַּמְתְּ אֶת הַסִּפּוּר!');
       App.celebrate({
-        title: legendary ? 'דִּינוֹזָאוּר אַגָּדִי נִפְתַּח! 🌟' : 'סִיַּמְתְּ אֶת כׇּל הַסִּפּוּר! 🏆',
+        title: built ? 'מִפְעַל הַדִּינוֹזָאוּרִים נִפְתַּח! 🛠️' : legendary ? 'דִּינוֹזָאוּר אַגָּדִי נִפְתַּח! 🌟' : 'סִיַּמְתְּ אֶת כׇּל הַסִּפּוּר! 🏆',
         lines,
         dinoHtml: legendary
           ? global.Renderer.dino(legendary.species, { legendary: true })
-          : App.dinoHtml(update ? update.dino : App.activeDino()),
+          : built
+            ? global.Renderer.dino('custom', { tint: Math.floor(Math.random() * global.Renderer.TINTS.length), parts: global.Renderer.defaultParts() })
+            : App.dinoHtml(update ? update.dino : App.activeDino()),
         onClose: () => {
           story = null;
           renderLibrary();
+          if (built) global.Builder.open(null);
         },
       });
     } else if (first) {
