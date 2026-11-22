@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-11-22: Hebrew writing (✍️ כְּתִיבָה tab)
+
+### Added
+- **Letter tracing.** A new tab with all 27 letters (22 plus the 5 final letters) in two styles: **דַּפּוּס** (Rubik Bold) and **כְּתַב יָד** (Gveret Levin, a cursive handwriting font). She taps a letter, hears its name and traces it with a finger, a stylus or a mouse.
+- **Three steps per letter**, two good tracings each: a bold dotted guide with a green start dot, a faint guide, then from memory (she can write smaller or off-centre; the letter is matched by shape, and a letter that looks more like another one is not accepted, e.g. ד for ר). 👀 הַצָּצָה shows the guide for 2 seconds in the last two steps.
+- **How the check works** (`js/writing.js`): the letter is drawn from the font, thinned to a centre line, and her ink must cover the whole centre line, stay on the letter and not scribble. A right tracing is accepted after a short pause; ✔ בְּדִיקָה explains what's wrong and shows red dots where something is missing. It works for any font, so another style can be added by adding a font and a line in `STYLES`.
+- Rewards: +2 DNA per good tracing, +5 DNA for each star (3 per letter), and a dino upgrade for the third star. Progress is saved in `App.state.writing`.
+- **Stroke order.** Every letter has its strokes in the written order and direction (`js/write-strokes.js`), following the school rules: start at the top, a lying line goes from left to right, a standing line goes from top to bottom, and a pencil that leaves the page starts a new stroke. The guide shows a numbered start point and an arrow for every stroke (the next stroke is highlighted), a line above the letter says it in words ("① right, down, left · ② down"), and ▶️ הַדְגָּמָה draws the letter stroke by stroke (it also plays by itself the first time a letter is opened). The rules are shown on the letter list. The order is taught, not yet enforced by the check. The stroke data was written by hand; please have the orders reviewed against the school's handwriting guide, they are plain lists of points that are easy to change.
+- Fonts are bundled in `fonts/` (Rubik Bold and Gveret Levin, both SIL Open Font License) so writing works offline. Service worker cache bumped to `v36`.
+
+
 ## 2026-11-22: Colours for each part of a built dino
 
 ### Added

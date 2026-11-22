@@ -39,6 +39,7 @@
       trips: 0,
       wardrobe: [],
       builds: 0, // Dino Workshop builds earned from builder stories and not used yet
+      writing: {}, // Hebrew writing: style (print|hand) -> letter -> { n: successful tracings }
       cloud: { on: false, code: '', className: '', name: '', locked: false, showcase: [], seen: 0, lastGiftDay: '' },
       town: null,
     };
@@ -271,6 +272,7 @@
       if (name === 'zoo') App.renderZoo();
       if (name === 'trail') global.Expedition.renderIntro();
       if (name === 'read') global.Reading.renderLibrary();
+      if (name === 'write') global.Writing.renderPick();
     },
 
     /* ---- lab ---- */
@@ -533,6 +535,7 @@
       });
 
       global.Reading.init();
+      global.Writing.init();
       global.Expedition.init();
       global.World.init();
       global.Share.init();

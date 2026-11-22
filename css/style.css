@@ -120,6 +120,25 @@ main { max-width: 720px; margin: 0 auto; padding: 12px; }
 .bw-opt.on { border-color: var(--green); background: #dff5e6; font-weight: 700; }
 .bw-color { width: 38px; height: 38px; border-radius: 50%; border: 3px solid; cursor: pointer; }
 .bw-color.on { outline: 4px solid var(--green); outline-offset: 2px; }
+/* Writing */
+@font-face { font-family: 'WriteRubik'; src: url(../fonts/Rubik-Bold.ttf) format('truetype'); font-weight: 700; font-display: swap; }
+@font-face { font-family: 'WriteGveret'; src: url(../fonts/GveretLevin.ttf) format('truetype'); font-weight: 400; font-display: swap; }
+.seg { display: flex; gap: 8px; margin: 6px 0 12px; }
+.seg button { flex: 1; font: inherit; font-weight: 700; padding: 10px; border-radius: 14px; border: 3px solid #cfe3d6; background: #f4fbf6; cursor: pointer; }
+.seg button.on { border-color: var(--green); background: #dff5e6; }
+.letter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 8px; }
+.wl-letter { font-size: 2.4rem; line-height: 1.1; padding: 6px 2px; border-radius: 16px; border: 3px solid #cfe3d6; background: #f4fbf6; cursor: pointer; display: flex; flex-direction: column; align-items: center; color: var(--ink); }
+.wl-letter small { font-family: 'Rubik', sans-serif; font-size: .7rem; letter-spacing: 1px; }
+.wl-letter.done { background: #fff6d6; border-color: var(--gold); }
+.writepad .canvas-wrap { position: relative; width: min(100%, 440px); margin: 0 auto; }
+#write-canvas { display: block; margin: 0 auto; background: #fff; border: 3px solid #cfe3d6; border-radius: 20px; touch-action: none; cursor: crosshair; }
+.write-step { text-align: center; margin: 0 0 8px; }
+.write-howto { text-align: center; margin: 0 0 8px; font-weight: 700; color: #1f6f3a; background: #eaf7ee; border-radius: 12px; padding: 6px 10px; line-height: 1.6; }
+.write-howto b { color: #2fa84f; font-size: 1.15em; }
+.write-rules { margin: 8px 0 12px; padding: 8px 28px 8px 12px; background: #f4fbf6; border: 2px solid #cfe3d6; border-radius: 14px; line-height: 1.7; font-weight: 600; }
+.write-feedback { text-align: center; font-weight: 700; min-height: 1.6em; margin: 8px 0; color: #b45309; }
+.write-result { position: absolute; inset: 0; border-radius: 20px; background: rgba(255,255,255,.94); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 16px; gap: 6px; }
+.write-result .row { width: 100%; display: grid; gap: 8px; }
 .bw-cparts { margin-bottom: 8px; }
 .bw-cpart { position: relative; min-width: 64px; }
 .bw-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px #9bb7a5; margin-top: 2px; }

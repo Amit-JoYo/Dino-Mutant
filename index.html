@@ -73,6 +73,48 @@
       </div>
     </section>
 
+    <!-- Writing -->
+    <section class="screen" id="screen-write" hidden>
+      <div id="write-pick">
+        <div class="card">
+          <h2>✍️ כְּתִיבָה</h2>
+          <p class="muted">בַּחֲרִי אוֹת וְעִקְבִי אַחֲרֶיהָ עִם הָאֶצְבַּע. כָּל אוֹת עוֹבְרִים שְׁלוֹשָׁה שְׁלָבִים!</p>
+          <ul class="write-rules">
+            <li>מַתְחִילִים מִלְּמַעְלָה, מֵהַמִּסְפָּר ①</li>
+            <li>קַו שׁוֹכֵב — מִשְּׂמֹאל לְיָמִין</li>
+            <li>קַו עוֹמֵד — מִלְּמַעְלָה לְמַטָּה</li>
+            <li>כְּשֶׁהָעִפָּרוֹן עוֹזֵב אֶת הַדַּף — מַתְחִילִים קַו חָדָשׁ ②</li>
+          </ul>
+          <div class="seg" id="write-styles">
+            <button data-style="print" class="on">דַּפּוּס</button>
+            <button data-style="hand">כְּתַב יָד</button>
+          </div>
+          <div id="write-grid" class="letter-grid"></div>
+          <h3>אוֹתִיּוֹת סוֹפִיּוֹת</h3>
+          <div id="write-finals" class="letter-grid"></div>
+        </div>
+      </div>
+      <div id="write-pad" hidden>
+        <div class="card writepad">
+          <div class="reader-head">
+            <button class="icon-btn" id="btn-write-back" aria-label="חֲזָרָה">➜</button>
+            <h2 id="write-name"></h2>
+            <button class="icon-btn" id="btn-write-say" aria-label="הַקְרֵא">🔊</button>
+          </div>
+          <p class="muted write-step" id="write-step"></p>
+          <p class="write-howto" id="write-howto" hidden></p>
+          <div class="canvas-wrap"><canvas id="write-canvas"></canvas><div id="write-result" class="write-result" hidden></div></div>
+          <div class="write-feedback" id="write-feedback" aria-live="polite"></div>
+          <div class="reader-actions">
+            <button class="btn ghost" id="btn-write-demo">▶️ הַדְגָּמָה</button>
+            <button class="btn ghost" id="btn-write-clear">🧽 מְחִיקָה</button>
+            <button class="btn ghost" id="btn-peek">👀 הַצָּצָה</button>
+          </div>
+          <button class="btn big" id="btn-write-check">✔ בְּדִיקָה</button>
+        </div>
+      </div>
+    </section>
+
     <!-- Expedition -->
     <section class="screen" id="screen-trail" hidden>
       <div class="card" id="trail-intro">
@@ -153,6 +195,7 @@
   <nav class="tabbar">
     <button data-tab="lab" class="on"><span>🧪</span>מַעְבָּדָה</button>
     <button data-tab="read"><span>📖</span>קְרִיאָה</button>
+    <button data-tab="write"><span>✍️</span>כְּתִיבָה</button>
     <button data-tab="trail"><span>🏞️</span>מַסָּע</button>
     <button data-tab="world"><span>🌍</span>הָעוֹלָם</button>
     <button data-tab="zoo"><span>🦖</span>הַגַּן שֶׁלִּי</button>
@@ -168,6 +211,8 @@
   <script src="js/manipulatives.js"></script>
   <script src="js/puzzles.js"></script>
   <script src="js/reading.js"></script>
+  <script src="js/write-strokes.js"></script>
+  <script src="js/writing.js"></script>
   <script src="js/expedition.js"></script>
   <script src="js/town-data.js"></script>
   <script src="js/town.js"></script>

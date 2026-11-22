@@ -1,4 +1,4 @@
-const CACHE = 'dino-mutant-v33';
+const CACHE = 'dino-mutant-v36';
 const ASSETS = [
   './',
   './index.html',
@@ -23,6 +23,10 @@ const ASSETS = [
   './js/manipulatives.js',
   './js/puzzles.js',
   './js/reading.js',
+  './js/write-strokes.js',
+  './js/writing.js',
+  './fonts/Rubik-Bold.ttf',
+  './fonts/GveretLevin.ttf',
   './js/expedition.js',
   './icons/icon.svg',
   './icons/icon-192.png',
