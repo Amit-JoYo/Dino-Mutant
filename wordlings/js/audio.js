@@ -5,28 +5,55 @@
   let timer = 0;
   let muted = false;
 
-  function pickVoice() {
+  function pickVoice(lang) {
     const voices = global.speechSynthesis ? global.speechSynthesis.getVoices() : [];
+    if (lang === 'he') return voices.find((v) => /^he/i.test(v.lang) || /^iw/i.test(v.lang)) || null;
     const us = voices.filter((v) => /^en[-_]US/i.test(v.lang));
     return us.find((v) => /natural|online/i.test(v.name)) || us.find((v) => /google/i.test(v.name)) || us[0] || voices.find((v) => /^en/i.test(v.lang)) || null;
   }
 
-  /** A single word is said twice, slowly: the first sound of a lone word is often clipped. */
+  function utterance(text, lang, rate) {
+    const u = new SpeechSynthesisUtterance(String(text).trim());
+    u.lang = lang === 'he' ? 'he-IL' : 'en-US';
+    u.rate = rate || (lang === 'he' ? 0.85 : 0.8);
+    u.volume = 1;
+    const v = pickVoice(lang);
+    if (v) u.voice = v;
+    return u;
+  }
+
+  /** Says one English word or sentence; the short delay stops desktop Chrome clipping the first sound. */
   function say(text, opts) {
     const synth = global.speechSynthesis;
     if (!synth || muted) return;
     synth.cancel();
-    let t = String(text).trim();
-    const single = !/\s/.test(t);
-    if (single) t = `${t}. ${t}.`;
-    const u = new SpeechSynthesisUtterance(t);
-    u.lang = 'en-US';
-    u.rate = (opts && opts.rate) || (single ? 0.8 : 0.85);
-    u.volume = 1;
-    const v = pickVoice();
-    if (v) u.voice = v;
+    const u = utterance(text, 'en', opts && opts.rate);
     clearTimeout(timer);
     timer = setTimeout(() => synth.speak(u), 120);
+  }
+
+  /** Says several parts one after the other, e.g. an English name and then its Hebrew line: [{ text, lang: 'en' | 'he' }]. */
+  function sayAll(parts) {
+    const synth = global.speechSynthesis;
+    if (!synth || muted) return;
+    synth.cancel();
+    const list = parts.filter((x) => x && x.text && String(x.text).trim()).map((x) => utterance(x.text.replace(/[^\u0590-\u05FFA-Za-z0-9 .,!?'-]/g, ' '), x.lang));
+    clearTimeout(timer);
+    // One after the other: some browsers drop an utterance that is queued while the previous one uses a different voice.
+    const next = (i) => {
+      if (i >= list.length) return;
+      const u = list[i];
+      let done = false;
+      const go = () => {
+        if (done) return;
+        done = true;
+        setTimeout(() => next(i + 1), 150);
+      };
+      u.onend = go;
+      u.onerror = go;
+      synth.speak(u);
+    };
+    timer = setTimeout(() => next(0), 120);
   }
 
   function stop() {
@@ -59,6 +86,8 @@
     ok() { tone(660, 0, 0.14, 'triangle'); tone(880, 0.1, 0.22, 'triangle'); },
     bad() { tone(220, 0, 0.22, 'sine', 0.12); },
     tap() { tone(520, 0, 0.06, 'sine', 0.1); },
+    alert() { tone(880, 0, 0.09, 'square', 0.1); tone(1175, 0.1, 0.16, 'square', 0.1); },
+    bump() { tone(150, 0, 0.08, 'square', 0.06); },
     throw() { tone(300, 0, 0.18, 'sine', 0.12); tone(500, 0.1, 0.18, 'sine', 0.12); },
     wobble() { tone(180, 0, 0.12, 'square', 0.07); },
     caught() { [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.12, 0.3, 'triangle', 0.2)); },
@@ -67,10 +96,12 @@
 
   global.Sound = {
     say,
+    sayAll,
     stop,
     sfx,
     get muted() { return muted; },
     setMuted(m) { muted = !!m; if (muted) stop(); },
     warmUp() { if (global.speechSynthesis) global.speechSynthesis.getVoices(); },
+    hasHebrew() { return !!pickVoice('he'); },
   };
 })(window);

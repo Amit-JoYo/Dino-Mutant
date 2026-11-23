@@ -47,7 +47,8 @@
     $('tabbar').hidden = name === 'play';
     document.querySelectorAll('#tabbar button').forEach((b) => b.classList.toggle('on', b.dataset.tab === name));
     if (name !== 'play') S.stop();
-    if (name === 'map') renderMap();
+    if (name === 'map') global.World.enter();
+    else global.World.leave();
     if (name === 'book') renderBook();
     if (name === 'words') renderWords();
     $('hud-coins').textContent = state.coins;
@@ -58,19 +59,6 @@
     if (w.colour) return `<span class="face-swatch" style="background:${w.colour}"></span>`;
     if (w.num) return `<span class="face-num"><b>${w.num}</b><i>${'●'.repeat(w.num)}</i></span>`;
     return `<span class="face-pic">${w.pic}</span>`;
-  }
-
-  /* ---------- map ---------- */
-  function renderMap() {
-    $('zone-list').innerHTML = ZONES.map((z) => {
-      const open = caughtCount() >= z.unlock;
-      const k = known(z);
-      return `<button class="zone${open ? '' : ' locked'}" data-zone="${z.id}" ${open ? '' : 'disabled'} style="--a:${z.sky[0]};--b:${z.sky[1]}">
-        <span class="zone-emoji">${open ? z.emoji : '🔒'}</span>
-        <span class="zone-meta"><b dir="ltr">${z.name}</b><small>${z.he}</small>
-          ${open ? `<span class="meter"><i style="width:${Math.round((k / z.words.length) * 100)}%"></i></span><small>${k}/${z.words.length} ⭐</small>` : `<small>עוֹד ${z.unlock - caughtCount()} יְצוּרִים כְּדֵי לִפְתֹּחַ</small>`}</span>
-      </button>`;
-    }).join('');
   }
 
   /* ---------- encounter ---------- */
@@ -218,6 +206,7 @@
     const oldStage = before ? stageOf(before.xp) : 0;
     const oldLevel = before ? levelOf(before.xp) : 0;
     const rec = before || (state.mons[id] = { xp: 0, n: 0 });
+    if (!state.buddy) state.buddy = id;
     rec.n++;
     rec.xp += enc.correct + (before ? 2 : 0);
     const coins = before ? 3 : 8;
@@ -237,14 +226,17 @@
     const title = !before ? `You caught ${sp.name}!` : stage > oldStage ? `${sp.name} evolved!` : level > oldLevel ? `${sp.name} is level ${level}!` : `${sp.name} is happy!`;
     if (stage > oldStage && before) S.sfx.level();
     const lines = [
-      !before ? '🎉 חָדָשׁ בָּאוֹסֶף!' : stage > oldStage ? '✨ הִתְפַּתֵּחַ!' : level > oldLevel ? '⬆️ עָלָה רָמָה!' : '',
+      !before ? `🎉 תָּפַסְתְּ אֶת ${sp.name}! חָדָשׁ בָּאוֹסֶף` : stage > oldStage ? `✨ ${sp.name} הִתְפַּתֵּחַ!` : level > oldLevel ? `⬆️ ${sp.name} עָלָה לְרָמָה ${level}!` : `💖 ${sp.name} שָׂמֵחַ!`,
       `+${coins} ⭐`,
-    ].filter(Boolean);
+    ];
     const r = $('result');
     r.innerHTML = `<h2 dir="ltr">${esc(title)}</h2>${lines.map((l) => `<p>${l}</p>`).join('')}
-      <div class="row"><button class="btn big" id="btn-again">עוֹד אֶחָד! ➔</button><button class="btn ghost" id="btn-home">🗺️ הַמַּפָּה</button></div>`;
+      <div class="row"><button class="btn big" id="btn-home">🚶 מַמְשִׁיכִים לָלֶכֶת</button></div>`;
     r.hidden = false;
-    S.say(sp.name);
+    S.sayAll([
+      { text: sp.name, lang: 'en' },
+      { text: !before ? 'תָּפַסְתְּ יְצוּר חָדָשׁ!' : stage > oldStage ? 'הוּא הִתְפַּתֵּחַ!' : level > oldLevel ? `הוּא עָלָה לְרָמָה ${level}!` : 'הוּא שָׂמֵחַ!', lang: 'he' },
+    ]);
     $('hud-coins').textContent = state.coins;
   }
 
@@ -276,9 +268,15 @@
       <div class="meter big"><i style="width:${Math.round((into / XP_PER_LEVEL) * 100)}%"></i></div>
       <p class="muted">נִתְפַּס ${rec.n} ${rec.n === 1 ? 'פַּעַם' : 'פְּעָמִים'}</p>
       <button class="btn alt" id="btn-say-name">🔊 ${esc(sp.name)}</button>
+      <button class="btn ghost" id="btn-buddy">${state.buddy === id ? '🚶 הוּא הוֹלֵךְ אִתִּי' : '🚶 שֶׁיֵּלֵךְ אִתִּי'}</button>
       <button class="btn big" data-close>סְגִירָה</button>`;
     $('modal').hidden = false;
     $('btn-say-name').onclick = () => S.say(sp.name);
+    $('btn-buddy').onclick = () => {
+      state.buddy = id;
+      save();
+      $('btn-buddy').textContent = '🚶 הוּא הוֹלֵךְ אִתִּי';
+    };
   }
 
   /* ---------- words ---------- */
@@ -291,6 +289,7 @@
     $('words-list').innerHTML = ZONES.map((z) => `<section class="wzone"><h3><span>${z.emoji}</span> <b dir="ltr">${z.name}</b> <small>${known(z)}/${z.words.length}</small></h3>
       <div class="wgrid">${z.words.map((w) => `<button class="wcell" data-w="${esc(w.id)}">${face(w)}<b dir="ltr">${esc(w.w)}</b><small>${stars(wordState(w.id).box)}</small></button>`).join('')}</div></section>`).join('');
     $('btn-mute').textContent = state.muted ? '🔇 הַקּוֹל כָּבוּי' : '🔊 הַקּוֹל פָּעִיל';
+    $('voice-note').textContent = S.hasHebrew() ? '✅ יֵשׁ קוֹל עִבְרִי בַּמַּכְשִׁיר' : '⚠️ הַדַּפְדְּפָן לֹא מוֹצֵא קוֹל עִבְרִי, אִם לֹא שׁוֹמְעִים עִבְרִית אֶפְשָׁר לְהַתְקִין אוֹתוֹ בְּהַגְדָּרוֹת הַדִּבּוּר (טֶקְסְט לְדִבּוּר) שֶׁל הַמַּכְשִׁיר.';
   }
 
   function openWord(id) {
@@ -304,10 +303,6 @@
   function init() {
     S.warmUp();
     document.querySelectorAll('#tabbar button').forEach((b) => b.addEventListener('click', () => { S.sfx.tap(); show(b.dataset.tab); }));
-    $('zone-list').addEventListener('click', (e) => {
-      const z = e.target.closest('[data-zone]');
-      if (z && !z.disabled) startEncounter(z.dataset.zone);
-    });
     $('cards').addEventListener('click', (e) => {
       const b = e.target.closest('.card');
       if (b) onAnswer(b);
@@ -315,8 +310,7 @@
     $('btn-hear').addEventListener('click', () => enc && enc.q && S.say(enc.q.spoken));
     $('btn-leave').addEventListener('click', leaveEncounter);
     $('result').addEventListener('click', (e) => {
-      if (e.target.closest('#btn-again')) startEncounter(enc.zone.id);
-      else if (e.target.closest('#btn-home')) leaveEncounter();
+      if (e.target.closest('#btn-home')) leaveEncounter();
     });
     $('book-grid').addEventListener('click', (e) => {
       const m = e.target.closest('[data-mon]');
@@ -339,12 +333,23 @@
       if (confirm('לִמְחֹק אֶת כָּל הַהִתְקַדְּמוּת?')) {
         state = { coins: 0, mons: {}, words: {}, muted: state.muted };
         save();
+        global.World.reset();
         show('map');
       }
     });
     show('map');
     if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
+
+  /* what the walking world needs from the game */
+  global.Game = {
+    startEncounter,
+    caught: caughtCount,
+    state: () => state,
+    save,
+    known: (zoneId) => known(ZONES.find((z) => z.id === zoneId)),
+    buddy: () => (state.buddy && state.mons[state.buddy] ? { id: state.buddy, stage: stageOf(state.mons[state.buddy].xp) } : null),
+  };
 
   document.addEventListener('DOMContentLoaded', init);
 })(window);

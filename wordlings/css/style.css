@@ -137,6 +137,30 @@ main { max-width: 560px; margin: 0 auto; padding: 12px; }
 .wl-aura { animation: pulse 2.4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
 .wl-spark { animation: twinkle 1.6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
 
+/* the walking world */
+.world-wrap { position: relative; width: min(100%, max(260px, calc(100vh - 360px))); margin: 0 auto; border-radius: 18px; overflow: hidden; border: 4px solid #3a2f7a; box-shadow: 0 6px 18px rgba(60, 40, 140, .3); background: #000; }
+#world-canvas { display: block; width: 100%; height: auto; aspect-ratio: 1; image-rendering: pixelated; image-rendering: crisp-edges; }
+.world-wrap.flash::after { content: ''; position: absolute; inset: 0; background: #fff; animation: flash .85s steps(1) forwards; }
+.world-banner { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); background: rgba(38, 33, 74, .85); color: #fff; border-radius: 14px; padding: 4px 14px; text-align: center; font-size: .85rem; line-height: 1.3; white-space: nowrap; pointer-events: none; }
+.world-banner b { display: block; font-size: 1rem; }
+.world-banner.show { animation: bannerin .35s ease-out; }
+.world-msg { position: absolute; left: 8px; right: 8px; bottom: 8px; background: #fff; color: var(--ink); border: 3px solid #3a2f7a; border-radius: 14px; padding: 8px 12px; text-align: center; font-weight: 700; line-height: 1.35; cursor: pointer; }
+.world-msg b { display: block; font-size: 1.1rem; }
+.controls { display: flex; align-items: center; justify-content: space-between; gap: 12px; max-width: 360px; margin: 14px auto 0; padding: 0 8px; touch-action: none; }
+.dpad { display: grid; grid-template-columns: repeat(3, 62px); grid-template-rows: repeat(2, 62px); gap: 6px; }
+.dpad button { font: inherit; font-size: 1.5rem; color: #fff; border: 0; border-radius: 16px; background: var(--pu); box-shadow: 0 4px 0 var(--pu-d); touch-action: none; user-select: none; cursor: pointer; }
+.dpad button:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--pu-d); }
+.dpad [data-dir=up] { grid-column: 2; grid-row: 1; }
+.dpad [data-dir=left] { grid-column: 1; grid-row: 2; }
+.dpad [data-dir=down] { grid-column: 2; grid-row: 2; }
+.dpad [data-dir=right] { grid-column: 3; grid-row: 2; }
+.act { font: inherit; font-size: 1.8rem; font-weight: 800; width: 84px; height: 84px; border-radius: 50%; border: 0; color: #fff; background: #e5484d; box-shadow: 0 5px 0 #a52a2f; touch-action: none; cursor: pointer; }
+.act:active { transform: translateY(3px); box-shadow: 0 2px 0 #a52a2f; }
+.world-wrap.fade::after { content: ''; position: absolute; inset: 0; background: #000; animation: fadeblk .5s linear forwards; pointer-events: none; }
+@keyframes fadeblk { 0% { opacity: 0; } 45% { opacity: 1; } 55% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes flash { 0% { opacity: 1; } 20% { opacity: 0; } 40% { opacity: 1; } 60% { opacity: 0; } 80% { opacity: 1; } 100% { opacity: 1; background: #000; } }
+@keyframes bannerin { from { transform: translateX(-50%) translateY(-24px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
+
 @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 @keyframes blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
 @keyframes flick { from { transform: rotate(-6deg); } to { transform: rotate(6deg); } }
