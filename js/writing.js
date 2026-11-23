@@ -474,6 +474,7 @@
     $('write-pick').hidden = true;
     $('write-pad').hidden = false;
     $('write-result').hidden = true;
+    $('write-feedback').textContent = '';
     try {
       await document.fonts.load(`${st.weight} 100px ${st.family}`, ch);
     } catch (e) { /* the system font is used */ }
@@ -747,6 +748,7 @@
     } catch (err) { /* fine: the stroke still follows the pointer over the canvas */ }
     clearTimeout(pad.timer);
     stopDemo();
+    $('write-feedback').textContent = '';
     if (pad.hints) pad.hints = null;
     pad.cur = [point(e)];
     pad.strokes.push(pad.cur);
@@ -817,6 +819,7 @@
   function success() {
     const App = global.App;
     pad.busy = true;
+    $('write-feedback').textContent = '';
     clearTimeout(pad.timer);
     const pr = progressOf(styleKey, pad.ch);
     const before = starsOf(pr.n);
