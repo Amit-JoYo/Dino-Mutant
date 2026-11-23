@@ -1,4 +1,4 @@
-const CACHE = 'dino-mutant-v38';
+const CACHE = 'dino-mutant-v39';
 const ASSETS = [
   './',
   './index.html',
