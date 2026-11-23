@@ -217,8 +217,97 @@
     }
     iw = Math.max(1, iw);
     ih = Math.max(1, ih);
-    t.paths = (data || []).map((s) => s.map(([fx, fy]) => [ix0 + fx * iw, iy0 + fy * ih]));
+    const raw = (data || []).map((s) => s.map(([fx, fy]) => [ix0 + fx * iw, iy0 + fy * ih]));
+    t.paths = raw.map((s) => followCentreLine(t, s));
     return t.paths;
+  }
+
+  // The listed points only say roughly where a stroke goes. The stroke itself follows the letter's centre line between them,
+  // so the guide and the demonstration run exactly along the letter.
+  function followCentreLine(t, pts) {
+    if (!t.sk.length) return pts;
+    const nearest = (p) => {
+      let best = t.sk[0];
+      let bd = Infinity;
+      t.sk.forEach((i) => {
+        const x = i % GRID;
+        const d = (x - p[0]) * (x - p[0]) + ((i - x) / GRID - p[1]) * ((i - x) / GRID - p[1]);
+        if (d < bd) {
+          bd = d;
+          best = i;
+        }
+      });
+      return best;
+    };
+    const cells = [];
+    pts.map(nearest).forEach((c) => {
+      if (cells[cells.length - 1] !== c) cells.push(c);
+    });
+    if (cells.length < 2) return pts;
+    const walk = [cells[0]];
+    for (let i = 1; i < cells.length; i++) {
+      const leg = centreLineWalk(t, cells[i - 1], cells[i]);
+      if (!leg) return pts;
+      walk.push(...leg.slice(1));
+    }
+    const xy = walk.map((c) => [(c % GRID) + 0.5, Math.floor(c / GRID) + 0.5]);
+    // light smoothing of the pixel steps, the ends stay where they are
+    return xy.map((p, i) => {
+      if (i === 0 || i === xy.length - 1) return p;
+      const a = Math.max(0, i - 2);
+      const b = Math.min(xy.length - 1, i + 2);
+      let sx = 0;
+      let sy = 0;
+      for (let j = a; j <= b; j++) {
+        sx += xy[j][0];
+        sy += xy[j][1];
+      }
+      return [sx / (b - a + 1), sy / (b - a + 1)];
+    });
+  }
+
+  // shortest way from one cell of the centre line to another along the centre line (Dijkstra), as a list of cells
+  function centreLineWalk(t, from, to) {
+    const dist = new Map([[from, 0]]);
+    const prev = new Map();
+    const open = new Set([from]);
+    const done = new Set();
+    const on = new Set(t.sk);
+    while (open.size) {
+      let cur = -1;
+      let cd = Infinity;
+      open.forEach((c) => {
+        if (dist.get(c) < cd) {
+          cd = dist.get(c);
+          cur = c;
+        }
+      });
+      if (cur === to) break;
+      open.delete(cur);
+      done.add(cur);
+      const x = cur % GRID;
+      const y = (cur - x) / GRID;
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          if (!dx && !dy) continue;
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= GRID || ny >= GRID) continue;
+          const n = ny * GRID + nx;
+          if (!on.has(n) || done.has(n)) continue;
+          const nd = cd + (dx && dy ? Math.SQRT2 : 1);
+          if (nd < (dist.has(n) ? dist.get(n) : Infinity)) {
+            dist.set(n, nd);
+            prev.set(n, cur);
+            open.add(n);
+          }
+        }
+      }
+    }
+    if (!dist.has(to)) return null;
+    const out = [to];
+    while (out[0] !== from) out.unshift(prev.get(out[0]));
+    return out;
   }
 
   const pathLength = (p) => p.reduce((s, q, i) => (i ? s + Math.hypot(q[0] - p[i - 1][0], q[1] - p[i - 1][1]) : 0), 0);
@@ -511,7 +600,7 @@
     ctx.save();
     ctx.lineCap = ctx.lineJoin = 'round';
     ctx.strokeStyle = '#f59e0b';
-    ctx.lineWidth = Math.max(8, p.size * 0.03);
+    ctx.lineWidth = Math.max(8, p.size * 0.03, 1.7 * p.target.half * k);
     let tip = null;
     p.demo.forEach((path) => {
       ctx.beginPath();
