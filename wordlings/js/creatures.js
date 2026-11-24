@@ -24,9 +24,67 @@
     { id: 'dribbo', name: 'Dribbo', element: '💧', c: ['#6fb7ff', '#3c85d6', '#dff0ff'], shape: 'round', ears: 'fin', tail: 'curl', crest: 'drop' },
     { id: 'frostle', name: 'Frostle', element: '❄️', c: ['#9fe8ee', '#4cb7c4', '#f0ffff'], shape: 'tall', ears: 'round', tail: 'puff', crest: 'snow' },
     { id: 'glimmy', name: 'Glimmy', element: '⭐', c: ['#ffe27a', '#d9a620', '#fff6cf'], shape: 'round', ears: 'none', tail: 'puff', crest: 'star' },
+    { id: 'acorno', name: 'Acorno', element: '🌰', c: ['#c99a62', '#8f6a3a', '#f0dcbd'], shape: 'round', ears: 'round', tail: 'none', crest: 'acorn' },
+    { id: 'buzzle', name: 'Buzzle', element: '🐝', c: ['#ffd84d', '#c99a00', '#fff3b8'], shape: 'tall', ears: 'none', tail: 'zig', crest: 'antenna' },
+    { id: 'crumbo', name: 'Crumbo', element: '🥐', c: ['#e8b36a', '#b8803a', '#fbe6c4'], shape: 'wide', ears: 'round', tail: 'puff', crest: 'bread' },
+    { id: 'minty', name: 'Minty', element: '🍦', c: ['#8fe3c4', '#4fb892', '#e0fbf1'], shape: 'round', ears: 'bunny', tail: 'curl', crest: 'cone' },
+    { id: 'tickle', name: 'Tickle', element: '⏰', c: ['#b9c3d6', '#7685a3', '#eef1f8'], shape: 'tall', ears: 'cat', tail: 'curl', crest: 'clock' },
+    { id: 'pillo', name: 'Pillo', element: '📚', c: ['#ff9fb2', '#d9647e', '#ffe3ea'], shape: 'wide', ears: 'none', tail: 'puff', crest: 'book' },
+    { id: 'rainbo', name: 'Rainbo', element: '🌈', c: ['#ffd0e8', '#e58bb8', '#fff0f8'], shape: 'round', ears: 'fin', tail: 'puff', crest: 'rainbow' },
+    { id: 'prisma', name: 'Prisma', element: '🔮', c: ['#b794f6', '#7a4fd0', '#eadcff'], shape: 'tall', ears: 'leaf', tail: 'zig', crest: 'gem' },
+    // found upstairs in the buildings
+    { id: 'donno', name: 'Donno', element: '🍩', c: ['#b5745a', '#7d4632', '#f2d9cc'], shape: 'round', ears: 'round', tail: 'puff', crest: 'donut' },
+    { id: 'chefo', name: 'Chefo', element: '👨‍🍳', c: ['#fff1d6', '#d8b77a', '#fffaf0'], shape: 'tall', ears: 'none', tail: 'puff', crest: 'chefhat' },
+    { id: 'kitey', name: 'Kitey', element: '🪁', c: ['#ff8f8f', '#d95a5a', '#ffe0e0'], shape: 'wide', ears: 'fin', tail: 'curl', crest: 'kite' },
+    { id: 'bubbo', name: 'Bubbo', element: '🫧', c: ['#a8e6f5', '#4fb6d1', '#e6faff'], shape: 'round', ears: 'none', tail: 'puff', crest: 'bubbles' },
+    { id: 'shapo', name: 'Shapo', element: '🔷', c: ['#7fe0b0', '#35a878', '#e3fbef'], shape: 'tall', ears: 'cat', tail: 'zig', crest: 'shapes' },
+    { id: 'palleto', name: 'Palleto', element: '🎨', c: ['#ffb27a', '#d9702a', '#ffe8d4'], shape: 'wide', ears: 'bunny', tail: 'curl', crest: 'palette' },
   ];
 
   const BY_ID = Object.fromEntries(SPECIES.map((s) => [s.id, s]));
+
+  /* How each creature changes when it evolves. Entry 0 is the second form (level 3), entry 1 the third (level 6):
+     [name, what changes]. A change stays for the later forms. extra: wings, horns, mane, spikes, cape, gem. */
+  const FORMS = {
+    sproutle: [['Sprouton', { shape: 'tall', extra: ['mane'] }], ['Sproutaur', { extra: ['mane', 'wings'] }]],
+    mossu: [['Mossuki', { shape: 'round', ears: 'leaf', extra: ['spikes'] }], ['Mossulord', { shape: 'tall', extra: ['spikes', 'gem'] }]],
+    bloomie: [['Bloomelle', { shape: 'tall', extra: ['mane'] }], ['Bloomqueen', { ears: 'bunny', extra: ['mane', 'gem'] }]],
+    embero: [['Emberon', { shape: 'tall', ears: 'cat', extra: ['horns'] }], ['Emberdrake', { extra: ['horns', 'wings'] }]],
+    berrimp: [['Berrimpo', { shape: 'round', extra: ['horns'] }], ['Berrimpex', { shape: 'tall', ears: 'bunny', extra: ['horns', 'cape'] }]],
+    puffy: [['Puffywing', { shape: 'round', ears: 'fin', extra: ['wings'] }], ['Puffystorm', { shape: 'tall', extra: ['wings', 'gem'] }]],
+    pebbo: [['Pebblo', { ears: 'cat', extra: ['spikes'] }], ['Pebbolith', { extra: ['spikes', 'horns'] }]],
+    shadlet: [['Shadwing', { extra: ['wings'] }], ['Shadmoon', { extra: ['wings', 'cape', 'gem'] }]],
+    zappo: [['Zapparo', { shape: 'tall', ears: 'cat', extra: ['spikes'] }], ['Zapstorm', { extra: ['spikes', 'wings'] }]],
+    dribbo: [['Dribblo', { shape: 'tall', extra: ['mane'] }], ['Dribmarine', { tail: 'curl', extra: ['mane', 'wings'] }]],
+    frostle: [['Frostine', { ears: 'cat', extra: ['spikes'] }], ['Frostking', { shape: 'wide', extra: ['spikes', 'cape', 'gem'] }]],
+    glimmy: [['Glimmer', { shape: 'tall', ears: 'fin', extra: ['wings'] }], ['Glimstar', { extra: ['wings', 'gem'] }]],
+    acorno: [['Acornel', { shape: 'tall', ears: 'leaf', extra: ['mane'] }], ['Acornoak', { shape: 'wide', extra: ['mane', 'gem'] }]],
+    buzzle: [['Buzzwing', { extra: ['wings'] }], ['Buzzqueen', { tail: 'zig', extra: ['wings', 'horns'] }]],
+    crumbo: [['Crumbear', { shape: 'round', ears: 'cat', extra: ['mane'] }], ['Crumking', { shape: 'tall', extra: ['mane', 'gem'] }]],
+    minty: [['Mintina', { shape: 'tall', extra: ['mane'] }], ['Minticorn', { ears: 'bunny', extra: ['cape', 'gem'] }]],
+    tickle: [['Ticktock', { ears: 'bunny', extra: ['horns'] }], ['Tickmaster', { shape: 'wide', extra: ['horns', 'cape'] }]],
+    pillo: [['Pillowl', { shape: 'round', ears: 'cat', extra: ['wings'] }], ['Pillibrary', { shape: 'tall', extra: ['wings', 'gem'] }]],
+    rainbo: [['Rainbolt', { shape: 'tall', extra: ['wings'] }], ['Rainbowing', { ears: 'fin', extra: ['wings', 'gem'] }]],
+    prisma: [['Prismara', { extra: ['spikes'] }], ['Prismagic', { shape: 'wide', extra: ['spikes', 'cape', 'gem'] }]],
+    donno: [['Donnut', { shape: 'wide', extra: ['mane'] }], ['Donnoble', { shape: 'tall', extra: ['mane', 'gem'] }]],
+    chefo: [['Chefino', { shape: 'round', ears: 'round', extra: ['cape'] }], ['Chefmaster', { shape: 'tall', extra: ['cape', 'gem'] }]],
+    kitey: [['Kitewing', { extra: ['wings'] }], ['Kitestar', { shape: 'tall', extra: ['wings', 'gem'] }]],
+    bubbo: [['Bubbler', { shape: 'tall', ears: 'fin', extra: ['mane'] }], ['Bubbloon', { shape: 'round', extra: ['mane', 'wings'] }]],
+    shapo: [['Shapeon', { shape: 'round', extra: ['spikes'] }], ['Shapemaster', { shape: 'tall', extra: ['spikes', 'horns', 'gem'] }]],
+    palleto: [['Palletto', { shape: 'tall', extra: ['mane'] }], ['Palletrix', { extra: ['mane', 'cape', 'gem'] }]],
+  };
+
+  /** the look of a creature at a stage (1-3): its name, body shape, ears, tail and extra parts */
+  function formAt(sp, stage) {
+    const f = { name: sp.name, shape: sp.shape, ears: sp.ears, tail: sp.tail, extra: [] };
+    const list = FORMS[sp.id] || [];
+    for (let s = 2; s <= stage; s++) {
+      const step = list[s - 2];
+      if (step) Object.assign(f, step[1], { name: step[0] });
+    }
+    return f;
+  }
+  const nameAt = (id, stage) => (BY_ID[id] ? formAt(BY_ID[id], stage || 1).name : '');
 
   /* ---- parts ---- */
   function crest(kind, x, y, s, c, stage) {
@@ -67,6 +125,50 @@
           .join('');
         return t(`${petals}<circle cx="0" cy="-8" r="7" fill="#ffd34d" stroke="#d9a620" stroke-width="1.6"/>`);
       }
+      case 'acorn':
+        return t(`<ellipse cx="0" cy="-8" rx="13" ry="14" fill="#c98a4b" stroke="#8a5a2a" stroke-width="2"/>
+          <path d="M-15 -14 Q0 -34 15 -14 Q0 -10 -15 -14 Z" fill="#7a4e2a" stroke="#4a3220" stroke-width="2"/>
+          <path d="M0 -30 V-38" stroke="#4a3220" stroke-width="3" stroke-linecap="round"/>`);
+      case 'antenna':
+        return t(`<path d="M-8 4 Q-16 -20 -22 -32 M8 4 Q16 -20 22 -32" stroke="#6b4a00" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <circle cx="-22" cy="-34" r="5" fill="#ffd23f" stroke="#6b4a00" stroke-width="2"/><circle cx="22" cy="-34" r="5" fill="#ffd23f" stroke="#6b4a00" stroke-width="2"/>`);
+      case 'bread':
+        return t(`<ellipse cx="0" cy="-12" rx="20" ry="12" fill="#e0a85a" stroke="#a8703a" stroke-width="2"/>
+          <path d="M-10 -20 l6 12 M0 -22 l5 14 M10 -20 l5 12" stroke="#a8703a" stroke-width="2.5" stroke-linecap="round"/>`);
+      case 'cone':
+        return t(`<path d="M-10 -14 L10 -14 L0 6 Z" fill="#e0a85a" stroke="#a8703a" stroke-width="2"/>
+          <circle cx="0" cy="-22" r="12" fill="#ff9ec4" stroke="#d9648f" stroke-width="2"/><circle cx="0" cy="-35" r="3" fill="#e5484d"/>`);
+      case 'clock':
+        return t(`<circle cx="0" cy="-16" r="15" fill="#fff" stroke="#8a5a2a" stroke-width="3"/>
+          <path d="M0 -16 V-26 M0 -16 L8 -12" stroke="#222" stroke-width="2.5" stroke-linecap="round"/><circle cx="0" cy="-16" r="2" fill="#222"/>`);
+      case 'book':
+        return t(`<path d="M-18 -4 L-18 -24 Q-9 -28 0 -22 Q9 -28 18 -24 L18 -4 Q9 -8 0 -2 Q-9 -8 -18 -4 Z" fill="#fff" stroke="#4b3fa8" stroke-width="2.5" stroke-linejoin="round"/>
+          <path d="M0 -22 V-2" stroke="#4b3fa8" stroke-width="2.5"/>`);
+      case 'rainbow':
+        return t(`<g fill="none" stroke-width="5" stroke-linecap="round"><path d="M-22 4 A22 22 0 0 1 22 4" stroke="#e5484d"/><path d="M-16 4 A16 16 0 0 1 16 4" stroke="#ffd23f"/><path d="M-10 4 A10 10 0 0 1 10 4" stroke="#4da3e8"/></g>`);
+      case 'gem':
+        return t(`<path d="M-14 -16 L-7 -30 H7 L14 -16 L0 4 Z" fill="#b388ff" stroke="#6c3fd0" stroke-width="2.5" stroke-linejoin="round"/>
+          <path d="M-14 -16 H14 M-7 -30 L-3 -16 L0 4 M7 -30 L3 -16 L0 4" stroke="#fff" stroke-opacity=".6" stroke-width="1.5" fill="none"/>`);
+      case 'donut':
+        return t(`<path fill-rule="evenodd" d="M-17 -14 a17 17 0 1 0 34 0 a17 17 0 1 0 -34 0 M-5.5 -14 a5.5 5.5 0 1 0 11 0 a5.5 5.5 0 1 0 -11 0 Z" fill="#ff9ec4" stroke="#d9648f" stroke-width="2"/>
+          <g stroke-width="2.6" stroke-linecap="round"><path d="M-12 -22 l4 -2" stroke="#fff"/><path d="M8 -26 l4 2" stroke="#ffd23f"/><path d="M12 -12 l4 3" stroke="#4da3e8"/><path d="M-14 -8 l3 3" stroke="#3f9a45"/><path d="M-2 -29 l3 1" stroke="#fff"/></g>`);
+      case 'chefhat':
+        return t(`<path d="M-14 4 V-8 Q-27 -10 -22 -25 Q-17 -35 -6 -31 Q0 -42 10 -32 Q25 -34 22 -20 Q27 -9 14 -8 V4 Z" fill="#fff" stroke="#c4cad4" stroke-width="2.2" stroke-linejoin="round"/>
+          <path d="M-14 -3 H14" stroke="#c4cad4" stroke-width="2"/>`);
+      case 'kite':
+        return t(`<path d="M0 -44 L17 -22 L0 0 L-17 -22 Z" fill="#ff6f6f" stroke="#c94a4a" stroke-width="2.2" stroke-linejoin="round"/>
+          <path d="M0 -44 V0 M-17 -22 H17" stroke="#fff" stroke-width="1.6" opacity=".75"/>
+          <path d="M0 0 Q-9 6 -2 12 Q6 17 -1 24" stroke="#c94a4a" stroke-width="2" fill="none"/><path d="M-4 9 l-5 -2 M-1 20 l5 -1" stroke="#ffd23f" stroke-width="3" stroke-linecap="round"/>`);
+      case 'bubbles':
+        return t(`<g fill="#e9fbff" stroke="#5bbfd8" stroke-width="2"><circle cx="-12" cy="-6" r="11"/><circle cx="8" cy="-18" r="14"/><circle cx="20" cy="-2" r="8"/></g>
+          <g fill="#fff" opacity=".85"><circle cx="-15" cy="-10" r="3"/><circle cx="4" cy="-23" r="4"/><circle cx="18" cy="-5" r="2.2"/></g>`);
+      case 'shapes':
+        return t(`<path d="M-22 4 L-10 -20 L2 4 Z" fill="#ff7a7a" stroke="#c94a4a" stroke-width="2" stroke-linejoin="round"/>
+          <circle cx="12" cy="-22" r="10" fill="#ffd23f" stroke="#d9a620" stroke-width="2"/>
+          <rect x="6" y="-12" width="18" height="16" rx="2" fill="#5aa9f5" stroke="#2f78c8" stroke-width="2"/>`);
+      case 'palette':
+        return t(`<path d="M-26 -10 Q-26 -36 0 -36 Q28 -36 28 -14 Q28 0 14 0 Q6 0 8 -8 Q10 -14 0 -12 Q-8 -10 -12 -2 Q-26 4 -26 -10 Z" fill="#e8c38a" stroke="#a8703a" stroke-width="2.2" stroke-linejoin="round"/>
+          <circle cx="-14" cy="-20" r="4.5" fill="#e5484d"/><circle cx="-2" cy="-27" r="4.5" fill="#ffd23f"/><circle cx="12" cy="-26" r="4.5" fill="#4da3e8"/><circle cx="20" cy="-14" r="4.5" fill="#3f9a45"/>`);
       case 'star':
         return t(`<path d="M0 -40 L7 -22 L26 -22 L11 -11 L17 8 L0 -3 L-17 8 L-11 -11 L-26 -22 L-7 -22 Z" fill="#ff9f1c" stroke="#d97706" stroke-width="2" stroke-linejoin="round"/>`);
       case 'mushroom':
@@ -121,6 +223,47 @@
     }
   }
 
+  /* parts an evolved creature grows. Behind the body: cape, wings, spikes, mane, horns. In front: the forehead gem. */
+  function extrasBack(list, g) {
+    const { rx, cy, ry, top, c, stage } = g;
+    const [, d, bl] = c;
+    const big = stage >= 3 ? 1.25 : 1;
+    let out = '';
+    if (list.includes('cape')) {
+      out += `<path d="M${r1(100 - rx * 0.7)} ${r1(cy - ry * 0.35)} L${100 - rx - 12} ${cy + ry + 4} Q100 ${cy + ry + 18} ${100 + rx + 12} ${cy + ry + 4} L${r1(100 + rx * 0.7)} ${r1(cy - ry * 0.35)} Z" fill="#e5484d" stroke="#a92a30" stroke-width="2.5" stroke-linejoin="round"/>`;
+    }
+    if (list.includes('wings')) {
+      out += [-1, 1].map((s) => `<path class="wl-wing wl-wing${s < 0 ? 'l' : 'r'}" d="M${100 + s * (rx - 10)} ${cy - 2} Q${r1(100 + s * (rx + 30 * big))} ${r1(cy - 54 * big)} ${r1(100 + s * (rx + 36 * big))} ${r1(cy - 10)} Q${r1(100 + s * (rx + 22 * big))} ${cy + 16} ${100 + s * (rx - 10)} ${cy + 14} Z" fill="${bl}" stroke="${d}" stroke-width="2.5" stroke-linejoin="round"/>`).join('');
+    }
+    if (list.includes('spikes')) {
+      out += [-62, -31, 0, 31, 62].map((a) => {
+        const rad = (a * Math.PI) / 180;
+        const px = 100 + rx * Math.sin(rad);
+        const py = cy - ry * Math.cos(rad);
+        const nx = Math.sin(rad);
+        const ny = -Math.cos(rad);
+        return `<path d="M${r1(px - ny * -9)} ${r1(py - nx * 9)} L${r1(px + nx * 26)} ${r1(py + ny * 26)} L${r1(px + ny * -9)} ${r1(py + nx * 9)} Z" fill="${d}" stroke="${d}" stroke-width="2" stroke-linejoin="round"/>`;
+      }).join('');
+    }
+    if (list.includes('mane')) {
+      for (let a = -150; a <= 150; a += 30) {
+        const rad = (a * Math.PI) / 180;
+        out += `<circle cx="${r1(100 + (rx + 5) * Math.sin(rad))}" cy="${r1(cy - (ry + 5) * Math.cos(rad))}" r="${r1(12 * big)}" fill="${bl}" stroke="${d}" stroke-width="2"/>`;
+      }
+    }
+    if (list.includes('horns')) {
+      out += [-1, 1].map((s) => {
+        const x0 = 100 + s * rx * 0.36;
+        return `<path d="M${r1(x0 - 7)} ${top + 16} Q${r1(x0 + s * 4)} ${top - 8} ${r1(x0 + s * 22 * big)} ${r1(top - 28 * big)} Q${r1(x0 + s * 16)} ${top} ${r1(x0 + 7)} ${top + 16} Z" fill="#fff2c4" stroke="#c9a640" stroke-width="2.2" stroke-linejoin="round"/>`;
+      }).join('');
+    }
+    return out;
+  }
+
+  const extrasFront = (list, ey) => (list.includes('gem')
+    ? `<path d="M100 ${ey - 28} l7 9 l-7 9 l-7 -9 Z" fill="#7ee0ff" stroke="#2f9bd0" stroke-width="2" stroke-linejoin="round"/><path d="M100 ${ey - 25} l-3 5" stroke="#fff" stroke-width="2" stroke-linecap="round"/>`
+    : '');
+
   /**
    * @param {string} id species id
    * @param {{stage?:number, mood?:'happy'|'sad'|'idle', size?:number}} o stage 1-3
@@ -129,13 +272,14 @@
     const sp = BY_ID[id];
     if (!sp) return '';
     const opt = Object.assign({ stage: 1, mood: 'idle' }, o);
-    const sh = SHAPES[sp.shape];
+    const f = formAt(sp, opt.stage);
+    const sh = SHAPES[f.shape];
     const { cy, rx, ry } = sh;
     const top = cy - ry;
     const [b, d, bl] = sp.c;
     const ey = top + ry * 0.62;
     const ex = rx * 0.38;
-    const grow = opt.stage === 3 ? 1.1 : opt.stage === 2 ? 1.05 : 1;
+    const grow = opt.stage === 3 ? 1.12 : opt.stage === 2 ? 1.06 : 1;
     const aura = opt.stage >= 2
       ? `<circle class="wl-aura" cx="100" cy="116" r="${opt.stage === 3 ? 96 : 84}" fill="url(#wl-aura-${sp.id})"/>`
       : '';
@@ -160,8 +304,9 @@
       ${defs}${aura}${sparks}
       <ellipse cx="100" cy="182" rx="${r1(rx * 0.8)}" ry="7" fill="#000" opacity=".12"/>
       <g class="wl-body" transform="translate(100 178) scale(${grow}) translate(-100 -178)">
-        ${tail(sp.tail, rx, cy, ry, sp.c)}
-        ${ears(sp.ears, top, rx, sp.c)}
+        ${extrasBack(f.extra, { rx, cy, ry, top, c: sp.c, stage: opt.stage })}
+        ${tail(f.tail, rx, cy, ry, sp.c)}
+        ${ears(f.ears, top, rx, sp.c)}
         <ellipse cx="${r1(100 - rx * 0.45)}" cy="176" rx="17" ry="9" fill="${d}"/><ellipse cx="${r1(100 + rx * 0.45)}" cy="176" rx="17" ry="9" fill="${d}"/>
         <ellipse cx="${r1(100 - rx * 0.97)}" cy="${r1(cy + ry * 0.18)}" rx="9" ry="14" fill="${d}" transform="rotate(25 ${r1(100 - rx * 0.97)} ${r1(cy + ry * 0.18)})"/>
         <ellipse cx="${r1(100 + rx * 0.97)}" cy="${r1(cy + ry * 0.18)}" rx="9" ry="14" fill="${d}" transform="rotate(-25 ${r1(100 + rx * 0.97)} ${r1(cy + ry * 0.18)})"/>
@@ -170,6 +315,7 @@
         <ellipse cx="${r1(100 - rx * 0.62)}" cy="${r1(ey + 13)}" rx="8" ry="5" fill="#ff7eb6" opacity=".45"/><ellipse cx="${r1(100 + rx * 0.62)}" cy="${r1(ey + 13)}" rx="8" ry="5" fill="#ff7eb6" opacity=".45"/>
         ${eye(-1)}${eye(1)}${mouth}
         ${crest(sp.crest, 100, top + 6, 1, sp.c, opt.stage)}
+        ${extrasFront(f.extra, ey)}
       </g>
     </svg>`;
   }
@@ -178,5 +324,5 @@
     return `<div class="wl-silhouette">${draw(id)}</div>`;
   }
 
-  global.Creatures = { SPECIES, BY_ID, draw, silhouette };
+  global.Creatures = { SPECIES, BY_ID, draw, silhouette, nameAt };
 })(window);

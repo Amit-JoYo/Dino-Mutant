@@ -13,24 +13,50 @@
 
   const GRASS = 0, TALL = 1, PATH = 2, TREE = 3, WATER = 4, FLOWER = 5, SIGN = 8, ROOF = 9, WALL = 10, DOOR = 11;
   const IWALL = 12, COUNTER = 13, STOVE = 14, SINK = 15, FRIDGE = 16, TABLE = 17, PLANT = 18, BED = 19, SOFA = 20, SHELF = 21, TV = 22, CLOCK = 23, EXIT = 24, CHAIR = 25;
+  const UP = 26, DOWN = 27; // stairs to the floor above and the floor below
   const SOLID = new Set([TREE, WATER, SIGN, ROOF, WALL, IWALL, COUNTER, STOVE, SINK, FRIDGE, TABLE, PLANT, BED, SOFA, SHELF, TV, CLOCK, CHAIR]);
 
   const PAL = {
     forest: { grass: '#6cc46a', g2: '#5db35c', g3: '#86d684', tall: '#3f9a45', tall2: '#2f7f38', tall3: '#59b556', roof: '#7a5a3a' },
     kitchen: { wall: '#cde7ee', wall2: '#a9d0dc', f1: '#f6f0e0', f2: '#ddd3b9', rug: '#e8704a', rug2: '#ffd23f' },
-    home: { wall: '#f2d9c4', wall2: '#dcb89a', f1: '#c8925a', f2: '#b07a44', rug: '#5f86e6', rug2: '#bcd0ff' },
-    colours: { wall: '#ffe0f0', wall2: '#f5b5d5', f1: '#fff7d6', f2: '#ffe3a0', rug: '#e2579a', rug2: '#ffd23f' },
+    home: { wall: '#f2d9c4', wall2: '#dcb89a', f1: '#c8925a', f2: '#b07a44', rug: '#5f86e6', rug2: '#bcd0ff', wood: true },
+    colours: { wall: '#ffe0f0', wall2: '#f5b5d5', f1: '#fff7d6', f2: '#ffe3a0', rug: '#e2579a', rug2: '#ffd23f', rainbow: true },
+    kitchen2: { wall: '#ffe3ee', wall2: '#f5b8cf', f1: '#fff4f8', f2: '#fbd9e6', rug: '#c4668d', rug2: '#ffd1e3' },
+    kitchen3: { wall: '#d8e2f2', wall2: '#aebfdc', f1: '#e9edf4', f2: '#cfd6e3', rug: '#4a6fa5', rug2: '#bcd2f5' },
+    home2: { wall: '#d9ecff', wall2: '#a9cdf0', f1: '#e6c58d', f2: '#d2ac6e', rug: '#47a86a', rug2: '#bff0cf', wood: true },
+    home3: { wall: '#e8dcf7', wall2: '#c4b0e6', f1: '#b98a5e', f2: '#9f734a', rug: '#8a5ac8', rug2: '#dcc8ff', wood: true },
+    colours2: { wall: '#e0f6ff', wall2: '#a9defa', f1: '#ffffff', f2: '#e4f4fd', rug: '#2e86de', rug2: '#ffd23f', rainbow: true },
+    colours3: { wall: '#3b2f78', wall2: '#2b2250', f1: '#4a3d85', f2: '#3d3270', rug: '#e2579a', rug2: '#ffd23f', rainbow: true },
+    hospital: { wall: '#e6f3fb', wall2: '#bcdcee', f1: '#ffffff', f2: '#e8f1f6', rug: '#e5484d', rug2: '#ffffff' },
   };
   const FLOWERS = ['#ff6f91', '#ffd23f', '#ffffff', '#8f6bff', '#4fc3f7'];
 
-  /* The rooms, drawn as text. # wall, . floor, , rug (creatures hide here), = runner, E exit mat,
-     C counter, K sink, S stove, F fridge, T table, R chair, P plant, B bed, O sofa, H shelves, V TV, L clock. */
+  /* The rooms, drawn as text. # wall, . floor, , rug (creatures hide here), = runner, E exit mat, U stairs up, D stairs down,
+     C counter, K sink, S stove, F fridge, T table, R chair, P plant, B bed, O sofa, H shelves, V TV, L clock.
+     Every building has three floors. The stairs up open when she knows enough words on the floor she is on. */
   const INTERIORS = {
-    bakery: {
-      zone: 'kitchen',
+    hospital: {
+      zone: 'hospital',
       rows: [
         '############',
-        '#CKCSC..CFC#',
+        '#CCCC..CCCC#',
+        '#..........#',
+        '#BB,,==,,BB#',
+        '#BB,,==,,BB#',
+        '#....==....#',
+        '#.RT.==.TR.#',
+        '#....==....#',
+        '#,,..==..,,#',
+        '#P...==...P#',
+        '#####EE#####',
+      ],
+    },
+    bakery: {
+      zone: 'kitchen',
+      up: { to: 'bakery2', need: { zone: 'kitchen', n: 12 } },
+      rows: [
+        '############',
+        '#CKCSCU.CFC#',
         '#..........#',
         '#,,,.==.,,,#',
         '#,,,.==.,,,#',
@@ -42,11 +68,47 @@
         '#####EE#####',
       ],
     },
-    house: {
-      zone: 'home',
+    bakery2: {
+      zone: 'kitchen2',
+      down: 'bakery',
+      up: { to: 'bakery3', need: { zone: 'kitchen2', n: 10 } },
       rows: [
         '############',
-        '#HHHHLV.HH.#',
+        '#CCCCCD..CU#',
+        '#..........#',
+        '#,,,.==.,,,#',
+        '#,,,.==.,,,#',
+        '#.TT.==.TT.#',
+        '#.TT.==.TT.#',
+        '#....==....#',
+        '#,,..==..,,#',
+        '#P...==...P#',
+        '############',
+      ],
+    },
+    bakery3: {
+      zone: 'kitchen3',
+      down: 'bakery2',
+      rows: [
+        '############',
+        '#SKSCFCSKSD#',
+        '#..........#',
+        '#,,..TT..,,#',
+        '#,,..TT..,,#',
+        '#....==....#',
+        '#.RT.==.TR.#',
+        '#.RT.==.TR.#',
+        '#,,..==..,,#',
+        '#P...==...P#',
+        '############',
+      ],
+    },
+    house: {
+      zone: 'home',
+      up: { to: 'house2', need: { zone: 'home', n: 12 } },
+      rows: [
+        '############',
+        '#HHHHLVUHH.#',
         '#..........#',
         '#BB,,==,,,.#',
         '#BB,,==,,,.#',
@@ -58,11 +120,47 @@
         '#####EE#####',
       ],
     },
-    shop: {
-      zone: 'colours',
+    house2: {
+      zone: 'home2',
+      down: 'house',
+      up: { to: 'house3', need: { zone: 'home2', n: 10 } },
       rows: [
         '############',
-        '#HHHHHH.HHH#',
+        '#HHHHVLDHHU#',
+        '#..........#',
+        '#,,,.==.,,,#',
+        '#,,,.==.,,,#',
+        '#.TT.==.OOO#',
+        '#.TT.==....#',
+        '#....==.RR.#',
+        '#,,..==..,,#',
+        '#P...==...P#',
+        '############',
+      ],
+    },
+    house3: {
+      zone: 'home3',
+      down: 'house2',
+      rows: [
+        '############',
+        '#HHHHLHHHHD#',
+        '#..........#',
+        '#BB,,==,,BB#',
+        '#BB,,==,,BB#',
+        '#....==....#',
+        '#.TT.==.TT.#',
+        '#.RR.==.RR.#',
+        '#,,..==..,,#',
+        '#P...==...P#',
+        '############',
+      ],
+    },
+    shop: {
+      zone: 'colours',
+      up: { to: 'shop2', need: { zone: 'colours', n: 12 } },
+      rows: [
+        '############',
+        '#HHHHHHUHHH#',
         '#..........#',
         '#,,,.==.,,,#',
         '#,,,.==.,,,#',
@@ -74,8 +172,43 @@
         '#####EE#####',
       ],
     },
+    shop2: {
+      zone: 'colours2',
+      down: 'shop',
+      up: { to: 'shop3', need: { zone: 'colours2', n: 10 } },
+      rows: [
+        '############',
+        '#HHHHHHDHHU#',
+        '#..........#',
+        '#,,,.==.,,,#',
+        '#,,,.==.,,,#',
+        '#.CC.==.CC.#',
+        '#....==....#',
+        '#,,,.==.,,,#',
+        '#P...==...P#',
+        '#....==....#',
+        '############',
+      ],
+    },
+    shop3: {
+      zone: 'colours3',
+      down: 'shop2',
+      rows: [
+        '############',
+        '#HHHHHHHHHD#',
+        '#..........#',
+        '#,,,.==.,,,#',
+        '#,,,.==.,,,#',
+        '#.CC.==.CC.#',
+        '#....==....#',
+        '#,,,.==.,,,#',
+        '#P...==...P#',
+        '#....==....#',
+        '############',
+      ],
+    },
   };
-  const CHARS = { '#': IWALL, '.': GRASS, ',': TALL, '=': PATH, E: EXIT, C: COUNTER, K: SINK, S: STOVE, F: FRIDGE, T: TABLE, R: CHAIR, P: PLANT, B: BED, O: SOFA, H: SHELF, V: TV, L: CLOCK };
+  const CHARS = { '#': IWALL, '.': GRASS, ',': TALL, '=': PATH, E: EXIT, C: COUNTER, K: SINK, S: STOVE, F: FRIDGE, T: TABLE, R: CHAIR, P: PLANT, B: BED, O: SOFA, H: SHELF, V: TV, L: CLOCK, U: UP, D: DOWN };
   const ITEM_NAMES = {
     K: ['sink', 'כִּיּוֹר'], S: ['stove', 'תַּנּוּר'], F: ['fridge', 'מְקָרֵר'], C: ['counter', 'שִׁשַּׁת עֲבוֹדָה'], T: ['table', 'שֻׁלְחָן'], R: ['chair', 'כִּסֵּא'],
     P: ['plant', 'צֶמַח'], B: ['bed', 'מִטָּה'], O: ['sofa', 'סְפָּה'], H: ['shelves', 'מַדָּפִים'], V: ['TV', 'טֵלֵוִיזְיָה'], L: ['clock', 'שָׁעוֹן'],
@@ -86,6 +219,7 @@
     { id: 'bakery', name: 'The Bakery', he: 'הַמַּאֲפִיָּה', x: 2, y: 20, right: false, roof: '#e07a3f' },
     { id: 'house', name: 'My House', he: 'הַבַּיִת שֶׁלִּי', x: 14, y: 12, right: true, roof: '#8a6cd8' },
     { id: 'shop', name: 'The Rainbow Shop', he: 'חֲנוּת הַקֶּשֶׁת', x: 2, y: 5, right: false, roof: '#e2579a' },
+    { id: 'hospital', name: 'The Hospital', he: 'בֵּית הַחוֹלִים', x: 16, y: 33, right: true, roof: '#e5484d' },
   ];
 
   const MAPS = {};
@@ -109,6 +243,7 @@
   const buddyImgs = {};
 
   const $ = (id) => document.getElementById(id);
+  const modalOpen = () => !$('modal').hidden;
   const cxOut = (y) => (y <= 28 ? 9 : 9 + Math.round(3 * Math.sin((y - 28) / 4.2))); // left column of the 2-wide path outside
   const START = () => ({ map: 'outside', x: cxOut(41), y: 41, dir: 'up' });
 
@@ -200,7 +335,7 @@
         else if (v < 0.2) tiles[y][x] = FLOWER;
       }
     }
-    return { id: 'outside', w, h, tiles, texts, roofs, doors, zone: 'forest', inside: false };
+    return { id: 'outside', w, h, tiles, texts, roofs, doors, zone: 'forest', pal: 'forest', inside: false, stairs: {}, npcs: [] };
   }
 
   function buildInterior(id, def) {
@@ -212,21 +347,138 @@
       return [...row].map((c) => (CHARS[c] === undefined ? GRASS : CHARS[c]));
     });
     const texts = {};
+    const stairs = {};
     rows.forEach((row, y) => [...row].forEach((c, x) => {
       if (ITEM_NAMES[c]) texts[`${x},${y}`] = { en: ITEM_NAMES[c][0], he: ITEM_NAMES[c][1] };
+      if (c === 'U') stairs[`${x},${y}`] = Object.assign({ dir: 'up', x, y }, def.up);
+      if (c === 'D') stairs[`${x},${y}`] = { dir: 'down', x, y, to: def.down };
     }));
-    return Object.assign(MAPS[id] || {}, { id, w, h, tiles, texts, roofs: {}, doors: {}, zone: def.zone, inside: true });
+    return Object.assign(MAPS[id] || {}, { id, w, h, tiles, texts, roofs: {}, doors: {}, zone: def.zone, pal: def.zone, inside: true, stairs, npcs: [] });
   }
 
   const zoneInfo = (zid) => global.Words.ZONES.find((z) => z.id === zid);
   const doorOpen = (d) => global.Game.caught() >= zoneInfo(d.zone).unlock;
   const doorAt = (x, y) => (cur.doors ? cur.doors[`${x},${y}`] : undefined);
+  const stairAt = (x, y) => cur.stairs[`${x},${y}`];
+  const stairsLeft = (s) => (s.need ? Math.max(0, s.need.n - global.Game.known(s.need.zone)) : 0);
+  const npcAt = (x, y) => cur.npcs.find((n) => n.x === x && n.y === y);
+
+  /* the people who give quests stand on a free floor tile near the spot written in their data */
+  function placeNpcs() {
+    global.Quests.NPCS.forEach((def) => {
+      const m = MAPS[def.map];
+      const free = (x, y) => x > 0 && y > 0 && x < m.w - 1 && y < m.h - 1 && (m.tiles[y][x] === GRASS || m.tiles[y][x] === FLOWER)
+        && !m.npcs.some((n) => n.x === x && n.y === y);
+      let spot = null;
+      for (let r = 0; r < 6 && !spot; r++) {
+        for (let dy = -r; dy <= r && !spot; dy++) {
+          for (let dx = -r; dx <= r && !spot; dx++) if (Math.max(Math.abs(dx), Math.abs(dy)) === r && free(def.x + dx, def.y + dy)) spot = { x: def.x + dx, y: def.y + dy };
+        }
+      }
+      if (spot) m.npcs.push({ id: def.id, look: def.look, x: spot.x, y: spot.y, dir: 'down' });
+    });
+  }
 
   function solid(x, y) {
     if (x < 0 || y < 0 || x >= cur.w || y >= cur.h) return true;
     const t = map[y][x];
     if (t === DOOR) return !doorOpen(doorAt(x, y));
-    return SOLID.has(t);
+    if (t === UP) return stairsLeft(stairAt(x, y)) > 0;
+    return SOLID.has(t) || !!npcAt(x, y);
+  }
+
+  /* ---------- trainers ---------- */
+  function placeTrainers() {
+    global.Trainers.TRAINERS.forEach((t) => {
+      const m = MAPS[t.map];
+      if (m.tiles[t.y][t.x] === TREE || m.tiles[t.y][t.x] === FLOWER || m.tiles[t.y][t.x] === TALL) m.tiles[t.y][t.x] = GRASS;
+      m.npcs.push({ id: t.id, trainer: true, look: t.look, x: t.x, y: t.y, hx: t.x, hy: t.y, tx: t.x, ty: t.y, dir: t.dir, hd: t.dir, sight: t.sight, mt: 0, armed: true, walking: false, alert: false });
+    });
+  }
+
+  const homeTrainer = (n) => {
+    n.x = n.tx = n.hx;
+    n.y = n.ty = n.hy;
+    n.dir = n.hd;
+    n.mt = 0;
+    n.walking = false;
+    n.alert = false;
+  };
+
+  /* how many tiles away she is along the way the trainer looks, or 0 if the trainer cannot see her */
+  function sightOf(n) {
+    const [dx, dy] = DIRS[n.dir];
+    for (let k = 1; k <= n.sight; k++) {
+      const x = n.x + dx * k;
+      const y = n.y + dy * k;
+      if (x === p.x && y === p.y) return k;
+      if (solid(x, y)) return 0;
+    }
+    return 0;
+  }
+
+  function spot(n, k) {
+    paused = true;
+    held = [];
+    n.alert = true;
+    n.armed = false;
+    global.Sound.sfx.alert();
+    setTimeout(() => {
+      n.alert = false;
+      if (k <= 1) {
+        paused = false;
+        global.Trainers.challenge(n.id);
+        return;
+      }
+      const [dx, dy] = DIRS[n.dir];
+      n.walking = true;
+      n.left = k - 1;
+      n.mt = 0;
+      n.tx = n.x + dx;
+      n.ty = n.y + dy;
+    }, 800);
+  }
+
+  /* a trainer that has seen her walks up to her, one tile at a time, and then asks for the duel */
+  function walkTrainers(dt) {
+    let any = false;
+    cur.npcs.forEach((n) => {
+      if (!n.walking) return;
+      any = true;
+      n.mt += dt / STEP;
+      if (n.mt < 1) return;
+      n.x = n.tx;
+      n.y = n.ty;
+      n.mt = 0;
+      n.left--;
+      if (n.left > 0) {
+        const [dx, dy] = DIRS[n.dir];
+        n.tx = n.x + dx;
+        n.ty = n.y + dy;
+      } else {
+        n.walking = false;
+        paused = false;
+        global.Trainers.challenge(n.id);
+      }
+    });
+    return any;
+  }
+
+  /** true when a trainer has just spotted her */
+  function checkTrainers() {
+    for (const n of cur.npcs) {
+      if (!n.trainer || n.walking || n.alert) continue;
+      const k = sightOf(n);
+      if (!n.armed) {
+        if (!k) n.armed = !global.Trainers.won(n.id);
+        continue;
+      }
+      if (k) {
+        spot(n, k);
+        return true;
+      }
+    }
+    return false;
   }
 
   function setMap(id) {
@@ -261,7 +513,7 @@
   function floorTile(zid, mx, my, dx, dy) {
     const p = PAL[zid];
     rect(dx, dy, T, T, p.f1);
-    if (zid === 'home') {
+    if (p.wood) {
       rect(dx, dy + 5, T, 1, p.f2);
       rect(dx, dy + 11, T, 1, p.f2);
       const o = (hash(mx, my >> 1, 3) % 12) + 2;
@@ -295,7 +547,7 @@
 
   function drawTile(mx, my, dx, dy, tick) {
     const t = map[my][mx];
-    const zid = cur.zone;
+    const zid = cur.pal;
     const ins = cur.inside;
     const pal = PAL[zid];
     const wallBase = () => {
@@ -414,7 +666,7 @@
         break;
       case SHELF: {
         rect(dx, dy, T, T, '#7a4e2a');
-        const cols = zid === 'colours' ? ['#e5484d', '#4da3e8', '#ffd23f', '#3f9a45', '#8f6bff', '#ff9f5a', '#ec6aa6'] : ['#e5484d', '#4da3e8', '#ffd23f', '#3f9a45', '#8f6bff', '#ff9f5a'];
+        const cols = pal.rainbow ? ['#e5484d', '#4da3e8', '#ffd23f', '#3f9a45', '#8f6bff', '#ff9f5a', '#ec6aa6'] : ['#e5484d', '#4da3e8', '#ffd23f', '#3f9a45', '#8f6bff', '#ff9f5a'];
         for (let row = 0; row < 2; row++) {
           let x = 1;
           for (let k = 0; x < 15; k++) {
@@ -439,6 +691,27 @@
         rect(dx + 8, dy + 4, 1, 4, '#222');
         rect(dx + 8, dy + 7, 3, 1, '#222');
         break;
+      case UP:
+      case DOWN: {
+        floor();
+        const up = t === UP;
+        const locked = up && stairsLeft(stairAt(mx, my)) > 0;
+        rect(dx + 1, dy, 14, T, '#6b4a2a');
+        for (let i = 0; i < 4; i++) rect(dx + 2, dy + 1 + i * 4, 12, 3, (up ? i : 3 - i) % 2 ? '#d8b98a' : '#c9a773');
+        rect(dx + 2, dy + (up ? 13 : 0), 12, 1, 'rgba(0,0,0,.25)');
+        // an arrow on the steps, and a padlock while they are shut
+        const ay = up ? 4 : 8;
+        const ac = locked ? '#9a8f80' : '#ffffff';
+        rect(dx + 7, dy + ay + (up ? 2 : 0), 2, 4, ac);
+        rect(dx + 5, dy + ay + (up ? 2 : 4), 6, 1, ac);
+        rect(dx + 6, dy + ay + (up ? 1 : 5), 4, 1, ac);
+        if (locked) {
+          rect(dx + 5, dy + 5, 6, 6, '#ffd23f');
+          rect(dx + 6, dy + 3, 4, 3, '#b8860b');
+          rect(dx + 7, dy + 7, 2, 2, '#7a5a00');
+        }
+        break;
+      }
       case TREE:
         grassBase(pal, mx, my, dx, dy);
         rect(dx + 6, dy + 10, 4, 6, '#7a4e2a');
@@ -511,11 +784,10 @@
     }
   }
 
-  function drawPlayer(dx, dy, dir, frame) {
-    const skin = '#f5c9a0';
-    const hair = '#5a3a22';
-    const shirt = '#ff6fa5';
-    const pants = '#3f6fd8';
+  const PLAYER_LOOK = { skin: '#f5c9a0', hair: '#5a3a22', shirt: '#ff6fa5', pants: '#3f6fd8' };
+
+  function drawPlayer(dx, dy, dir, frame, look = PLAYER_LOOK) {
+    const { skin, hair, shirt, pants, hat } = look;
     const leg = frame === 1 ? 2 : 3;
     const leg2 = frame === 2 ? 2 : 3;
     rect(dx + 4, dy + 15, 8, 1, 'rgba(0,0,0,.18)');
@@ -530,6 +802,7 @@
       rect(m(6, 2), dy + 13, 2, leg, pants);
       rect(m(8, 2), dy + 13, 2, leg2, pants);
       rect(m(5, 3), dy + 13 + leg - 1, 4, 1, '#fff');
+      if (hat) rect(m(4, 8), dy - 2, 8, 4, hat);
       return;
     }
     rect(dx + 4, dy + 1, 8, 4, hair);
@@ -549,6 +822,20 @@
     rect(dx + 9, dy + 13, 2, leg2, pants);
     rect(dx + 5, dy + 12 + leg, 2, 1, '#fff');
     rect(dx + 9, dy + 12 + leg2, 2, 1, '#fff');
+    if (hat) rect(dx + 3, dy - 2, 10, 4, hat);
+  }
+
+  /* the "!" over a person who has a quest to give and the "?" over one waiting for her to finish it */
+  function drawMarker(dx, dy, kind) {
+    const rows = kind === '!' ? ['11', '11', '11', '11', '00', '11'] : ['0110', '1001', '0010', '0100', '0000', '0100'];
+    const c = kind === '!' ? '#ffd23f' : '#5ee08a';
+    const bob = Math.round(Math.sin(performance.now() / 220));
+    const w = rows[0].length;
+    rows.forEach((row, y) => [...row].forEach((v, x) => {
+      if (v === '1') {
+        rect(dx + 8 - w + x * 2, dy - 15 + y * 2 + bob, 2, 2, c);
+      }
+    }));
   }
 
   function buddyImage(id, stage) {
@@ -579,19 +866,37 @@
     for (let my = y0; my <= Math.min(cur.h - 1, y0 + VH); my++) {
       for (let mx = x0; mx <= Math.min(cur.w - 1, x0 + VW); mx++) drawTile(mx, my, mx * T - ox, my * T - oy, tick);
     }
+    cur.npcs.forEach((n) => {
+      const mt = n.walking ? n.mt : 0;
+      const nx = Math.round((n.x + (n.tx - n.x) * mt) * T - ox);
+      const ny = Math.round((n.y + (n.ty - n.y) * mt) * T - oy);
+      if (nx < -T || ny < -T * 2 || nx > VW * T || ny > VH * T + T) return;
+      drawPlayer(nx, ny, n.dir, n.walking ? (mt < 0.5 ? 1 : 2) : 0, n.look);
+      const mk = n.alert ? '!' : n.trainer ? '' : global.Quests.marker(n.id);
+      if (mk) drawMarker(nx, ny, mk);
+    });
     const b = global.Game.buddy();
     if (b) {
       const bt = buddy.x === buddy.tx && buddy.y === buddy.ty ? 0 : t;
       const bx = buddy.x + (buddy.tx - buddy.x) * bt;
       const by = buddy.y + (buddy.ty - buddy.y) * bt;
       const img = buddyImage(b.id, b.stage);
-      const bob = Math.round(Math.sin(now / 180) * 0.8);
+      const bob = b.fainted ? 0 : Math.round(Math.sin(now / 180) * 0.8);
       if (img.complete && img.naturalWidth) {
         ctx.imageSmoothingEnabled = true;
         ctx.fillStyle = 'rgba(0,0,0,.18)';
         ctx.fillRect(Math.round(bx * T - ox) + 3, Math.round(by * T - oy) + 14, 10, 1);
+        if (b.fainted) ctx.globalAlpha = 0.4;
         ctx.drawImage(img, Math.round(bx * T - ox) + 1, Math.round(by * T - oy) + 1 + bob, 14, 14);
+        ctx.globalAlpha = 1;
         ctx.imageSmoothingEnabled = false;
+        if (b.fainted) {
+          const zx = Math.round(bx * T - ox) + 10;
+          const zy = Math.round(by * T - oy) + 1 - (Math.floor(now / 500) % 2);
+          rect(zx, zy, 3, 1, '#fff');
+          rect(zx + 2, zy + 1, 1, 1, '#fff');
+          rect(zx, zy + 2, 3, 1, '#fff');
+        }
       }
     }
     const sx = Math.round(fx * T - ox);
@@ -648,7 +953,7 @@
     }
   }
 
-  /* through a door: fade to black, swap the map, fade back */
+  /* through a door or up the stairs: fade to black, swap the map, fade back */
   function warp(mapId, x, y, dir) {
     paused = true;
     held = [];
@@ -667,6 +972,7 @@
     setTimeout(() => {
       wrap.classList.remove('fade');
       paused = false;
+      checkTrainers();
     }, 500);
   }
 
@@ -698,7 +1004,15 @@
       warp(back.map, back.x, back.y, 'down');
       return;
     }
+    if (tile === UP || tile === DOWN) {
+      // she comes out next to the stairs on the other floor, facing away from them
+      const s = stairAt(p.x, p.y);
+      const other = Object.values(MAPS[s.to].stairs).find((o) => o.dir !== s.dir);
+      warp(s.to, other.x, other.y + 1, 'down');
+      return;
+    }
     savePos();
+    if (checkTrainers()) return;
     if (tile === TALL) {
       steps++;
       if (steps >= 3 && Math.random() < ENCOUNTER_CHANCE) {
@@ -721,9 +1035,13 @@
         lastBump = now;
         global.Sound.sfx.bump();
         const door = nx >= 0 && ny >= 0 && nx < cur.w && ny < cur.h && map[ny][nx] === DOOR ? doorAt(nx, ny) : null;
+        const stair = nx >= 0 && ny >= 0 && nx < cur.w && ny < cur.h && map[ny][nx] === UP ? stairAt(nx, ny) : null;
         if (door) {
           const left = zoneInfo(door.zone).unlock - global.Game.caught();
           message(door.name, `🔒 הַדֶּלֶת נְעוּלָה. צָרִיךְ לִתְפֹּס עוֹד ${left} ${left === 1 ? 'יְצוּר' : 'יְצוּרִים'} כְּדֵי לִפְתֹּחַ אוֹתָהּ`, true);
+        } else if (stair && stairsLeft(stair) > 0) {
+          const left = stairsLeft(stair);
+          message('Learn more words to go up!', `🔒 הַמַּדְרֵגוֹת נְעוּלוֹת. צָרִיךְ לָדַעַת עוֹד ${left} ${left === 1 ? 'מִלָּה' : 'מִלִּים'} בַּקּוֹמָה הַזּוֹ כְּדֵי לַעֲלוֹת 🪜`, true);
         }
       }
       return;
@@ -739,7 +1057,12 @@
   }
 
   function update(dt) {
+    if (walkTrainers(dt)) return;
     if (paused) return;
+    if (modalOpen()) {
+      held = [];
+      if (!p.moving) return;
+    }
     if (p.moving) {
       p.t += dt;
       if (p.t >= STEP) {
@@ -767,13 +1090,24 @@
   }
 
   function interact() {
-    if (paused || p.moving) return;
+    if (paused || p.moving || modalOpen()) return;
     const [dx, dy] = DIRS[p.dir];
     const x = p.x + dx;
     const y = p.y + dy;
+    const npc = npcAt(x, y);
+    if (npc) {
+      npc.dir = { up: 'down', down: 'up', left: 'right', right: 'left' }[p.dir];
+      held = [];
+      if (npc.trainer) {
+        global.Trainers.talk(npc.id);
+        npc.dir = npc.hd;
+      } else global.Quests.talk(npc.id);
+      return;
+    }
     const t = cur.texts[`${x},${y}`];
     if (t) {
       message(t.en, t.he, true);
+      global.Quests.event('read', { en: t.en });
       return;
     }
     const d = doorAt(x, y);
@@ -807,7 +1141,7 @@
     $('world-msg').addEventListener('click', () => ($('world-msg').hidden = true));
     const KEYS = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', w: 'up', s: 'down', a: 'left', d: 'right', W: 'up', S: 'down', A: 'left', D: 'right' };
     document.addEventListener('keydown', (e) => {
-      if (!active) return;
+      if (!active || modalOpen()) return;
       if (KEYS[e.key]) {
         e.preventDefault();
         if (!e.repeat) press(KEYS[e.key]);
@@ -827,6 +1161,8 @@
     Object.keys(INTERIORS).forEach((id) => {
       MAPS[id] = buildInterior(id, INTERIORS[id]);
     });
+    placeNpcs();
+    placeTrainers();
     canvas = $('world-canvas');
     canvas.width = VW * T;
     canvas.height = VH * T;
@@ -859,6 +1195,11 @@
     }
     lastZone = cur.zone;
     banner();
+    // trainers go back to their spots; one she is standing in front of waits until she has stepped away
+    Object.values(MAPS).forEach((m) => m.npcs.forEach((n) => n.trainer && homeTrainer(n)));
+    cur.npcs.forEach((n) => {
+      if (n.trainer) n.armed = !global.Trainers.won(n.id) && sightOf(n) === 0;
+    });
     cancelAnimationFrame(raf);
     raf = requestAnimationFrame(frame);
   }
@@ -876,5 +1217,16 @@
     place(s);
   }
 
-  global.World = { enter, leave, reset };
+  /* she said "not now": the trainer goes back and waits until she has walked out of sight */
+  function sendTrainerHome(id) {
+    Object.values(MAPS).forEach((m) => m.npcs.forEach((n) => {
+      if (n.id === id && n.trainer) {
+        homeTrainer(n);
+        n.armed = false;
+      }
+    }));
+    paused = false;
+  }
+
+  global.World = { enter, leave, reset, release: sendTrainerHome };
 })(window);

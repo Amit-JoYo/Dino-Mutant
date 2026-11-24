@@ -15,7 +15,7 @@
     <div class="brand"><span>🔮</span> Wordlings</div>
     <div class="hud">
       <span class="chip" title="כּוֹכָבִים">⭐ <b id="hud-coins">0</b></span>
-      <span class="chip" title="יְצוּרִים">🐾 <b id="hud-mons">0/12</b></span>
+      <span class="chip" title="יְצוּרִים">🐾 <b id="hud-mons">0/26</b></span>
     </div>
   </header>
 
@@ -53,6 +53,11 @@
       </div>
     </section>
 
+    <section class="screen" id="screen-quests" hidden>
+      <div class="card"><h2>הַמְּשִׂימוֹת שֶׁלִּי 📜</h2><p class="muted">אֲנָשִׁים בַּכְּפָר וּבַבָּתִּים צְרִיכִים עֶזְרָה. חַפְּשִׂי אֶת מִי שֶׁעַל רֹאשׁוֹ ❗</p></div>
+      <div id="quests-list"></div>
+    </section>
+
     <section class="screen play" id="screen-play" hidden>
       <div class="play-top">
         <button class="icon-btn" id="btn-leave" aria-label="יְצִיאָה">✖</button>
@@ -62,6 +67,9 @@
       <div class="scene" id="scene">
         <div class="scene-ground"></div>
         <div id="wild" class="wild"></div>
+        <div id="mine" class="mine" hidden></div>
+        <div id="hp-opp" class="hpbar opp" hidden></div>
+        <div id="hp-me" class="hpbar me" hidden></div>
         <div id="ball" class="ball" hidden><span>⭐</span></div>
         <div class="bubble">
           <button id="btn-hear" class="hear" aria-label="הַשְׁמַע שׁוּב">🔊</button>
@@ -77,6 +85,7 @@
     <button data-tab="map" class="on"><span>🧭</span>מַסָּע</button>
     <button data-tab="book"><span>📖</span>אוֹסֶף</button>
     <button data-tab="words"><span>🔤</span>מִילִּים</button>
+    <button data-tab="quests"><span>📜</span>מְשִׂימוֹת</button>
   </nav>
 
   <div class="modal" id="modal" hidden><div class="modal-card" id="modal-card"></div></div>
@@ -84,6 +93,8 @@
   <script src="js/creatures.js"></script>
   <script src="js/words.js"></script>
   <script src="js/audio.js"></script>
+  <script src="js/quests.js"></script>
+  <script src="js/trainers.js"></script>
   <script src="js/world.js"></script>
   <script src="js/game.js"></script>
 </body>

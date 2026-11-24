@@ -1,4 +1,4 @@
-const CACHE = 'wordlings-v6';
+const CACHE = 'wordlings-v9';
 const ASSETS = [
   './',
   './index.html',
@@ -7,6 +7,8 @@ const ASSETS = [
   './js/creatures.js',
   './js/words.js',
   './js/audio.js',
+  './js/quests.js',
+  './js/trainers.js',
   './js/world.js',
   './js/game.js',
   './icons/icon.svg',
